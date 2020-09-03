@@ -35,13 +35,13 @@ java -jar MARS2.jar
 
 ## Referencia
 
-[Netwide Ensamblador - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler])
+[Netwide Ensamblador - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 
-[x86_64 Linux Assembly #1 - "Hello, World!"](https://www.youtube.com/watch?v=VQAKkuLL31g])
+[x86_64 Linux Assembly #1 - "Hello, World!"](https://www.youtube.com/watch?v=VQAKkuLL31g)
 
-[x86_64 Linux Assembly #12 - Reading Files](https://www.youtube.com/watch?v=BljOGzRP_Ws])
+[x86_64 Linux Assembly #12 - Reading Files](https://www.youtube.com/watch?v=BljOGzRP_Ws)
 
-[obtener argumentos, code](https://gist.github.com/Gydo194/730c1775f1e05fdca6e9b0c175636f5b])
+[obtener argumentos, code](https://gist.github.com/Gydo194/730c1775f1e05fdca6e9b0c175636f5b)
 
 [MIPS-Simulator-Python](https://github.com/GeorgeSaman/MIPS-Simulator-Python)
 
