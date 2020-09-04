@@ -45,3 +45,5 @@ java -jar MARS2.jar
 
 [MIPS-Simulator-Python](https://github.com/GeorgeSaman/MIPS-Simulator-Python)
 
+[Combinacion de C y Ensamblador](https://cs.lmu.edu/~ray/notes/nasmtutorial/)
+
