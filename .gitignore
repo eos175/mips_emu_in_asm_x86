@@ -1,6 +1,9 @@
 # https://github.com/github/gitignore
 
 
+# editor de picha
+*.save
+
 # archivos compilados
 *.o
 *.app
