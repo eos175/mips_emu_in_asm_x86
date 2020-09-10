@@ -27,9 +27,9 @@ uint32_t hex2int(const char *str)
         c = *str++;
 
         // transform hex character to the 4bit equivalent number, using the ascii table indexes
-        if (c >= '0' && c <= '9') c -= '0';
-        else if (c >= 'a' && c <='f') c -= 'a' + 10;
-        else if (c >= 'A' && c <='F') c -= 'A' + 10;
+        if (c >= '0' && c <= '9') c = c - '0';
+        else if (c >= 'a' && c <='f') c = c - 'a' + 10;
+        else if (c >= 'A' && c <='F') c = c - 'A' + 10;
 
         // shift 4 to make space for new digit, and add the 4 bits of the new digit 
         res = (res << 4) | (c & 0xF);

@@ -3,6 +3,7 @@
 
 
 uint32_t hex2int(const char *str);
+uint32_t xtou64(const char *str);
 
 /*
 
@@ -13,11 +14,11 @@ uint32_t hex2int(const char *str);
 int main(int argc, char const *argv[])
 {
 
-    uint32_t a = hex2int("24100003");
-    uint32_t b = hex2int("24120003");
+    uint32_t a = xtou64("34262ea8");
+    uint32_t b = hex2int("34262ea8");
 
 
-    printf("p = %d\n", b);
+    printf("a=%08x b=%08x\n", a, b);
 
     return 0;
 }
