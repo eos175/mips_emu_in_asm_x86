@@ -14,11 +14,11 @@ uint32_t xtou64(const char *str);
 int main(int argc, char const *argv[])
 {
 
-    uint32_t a = xtou64("34262ea8");
-    uint32_t b = hex2int("34262ea8");
+    uint32_t a = xtou64("0000000c");
+    uint32_t b = hex2int("0000000c");
 
 
-    printf("a=%08x b=%08x\n", a, b);
+    printf("a=%08x b=%d\n", a, b);
 
     return 0;
 }

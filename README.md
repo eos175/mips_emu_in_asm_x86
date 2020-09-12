@@ -28,9 +28,12 @@ java -jar MARS2.jar
 
 - [x] usar git
 - [x] bin -> hex, ver main.py
-- [ ] hacer makefile
-- [ ] leer args
-- [ ] leer archivo
+- [x] hacer makefile
+- [x] leer args
+- [x] leer archivo
+- [ ] unir emulador
+- [ ] $gp -> pointer screen
+- [ ] pointer keyboard
 
 
 ## Referencia

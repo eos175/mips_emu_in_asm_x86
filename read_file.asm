@@ -13,7 +13,7 @@ SYS_POLL	equ	7
 SYS_LSEEK	equ	8
 
 
-extern hex2int
+%include "hex2int.asm"
 
 
 global load_file
@@ -90,7 +90,7 @@ load_file:
         add rdi, 9
         add r9, 4
 
-        cmp rdi, rcx 
+        cmp rdi, rcx
         jne .L2
 
 

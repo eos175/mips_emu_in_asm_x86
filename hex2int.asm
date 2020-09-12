@@ -1,17 +1,7 @@
 
 %if 0
 
-
-/*
-
-https://stackoverflow.com/questions/8011700/how-do-i-extract-specific-n-bits-of-a-32-bit-unsigned-integer-in-c
-
 https://stackoverflow.com/questions/10156409/convert-hex-string-char-to-int
-
-hex2int("24100003") -> 605028355
-
-*/
-
 
 /**
  * hex2int

@@ -4,6 +4,16 @@
 %define set_register(i, r)      mov [registers + i*4], r
 
 
+%define check_func(code, label)    __check_op code, label
+
+
+%define check_op(code, label)   __check_op code, label
+%macro __check_op 2
+    cmp al, %1
+    je %2
+%endmacro
+
+
 
 
 %if 0
@@ -14,6 +24,9 @@ https://www.eg.bucknell.edu/~csci320/mips_web/
 
 para las operaciones inmediatas, almacenamos en 
     $k0 – $k1	    $26 – $27 	    Reservados para el núcleo del S.O.
+
+
+http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html
 
 
 %endif
@@ -30,6 +43,7 @@ para las operaciones inmediatas, almacenamos en
 %define _mflo_r		0x12
 %define _mtlo_r		0x13
 %define _mult_r		0x18
+%define _mul_r		0x02     ; TODO(eos175)
 %define _multu_r	0x19
 %define _nor_r		0x27
 %define _xor_r		0x26
@@ -68,6 +82,7 @@ para las operaciones inmediatas, almacenamos en
 %define _jal_j		0x03
 
 
+%if 0
 
 %define __t1    eax
 %define __t2    ecx
@@ -150,3 +165,5 @@ para las operaciones inmediatas, almacenamos en
 %endmacro
 
 
+
+%endif
