@@ -16,6 +16,11 @@
 
 
 
+%define get_inst_rs(r)   movsx  r, BYTE[inst + instruction_t.rs]
+
+
+
+
 %if 0
 
 // ver las instruciones

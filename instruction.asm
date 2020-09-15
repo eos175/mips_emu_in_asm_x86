@@ -44,6 +44,8 @@ struc instruction_t
 endstruc
 
 
+%if 0
+
 global get_instruction
 
 get_instruction:
@@ -88,3 +90,5 @@ get_instruction:
     and     edi, 67108863
     mov     DWORD[rsi+8], edi
     ret
+
+%endif

@@ -4,19 +4,33 @@ extern print_hex
 extern print_int
 extern print_inst
 
+extern get_instruction ; tmp para llevar un registro
+
+
 
 %include "mips.asm"
 %include "instruction.asm"
 %include "read_file.asm"
+%include "write_file.asm"
 
 
 global _start
 
+; c 100 deco, save file
+; op=0x9 rs=0 rt=16 rd=0 shamt=0x0, func=0x3 imm=0x3 target=0x100003
 
 section .data
+    c_clock dd 0
     pc dd 0 ; 0x00400000
 
+    filename_log db "mips_instruction.log", 0
+
+
 section .bss
+
+
+    logger      RESB 16 * 1024
+    logger_len  RESD 1
 
     ; 1MB -> 262144 lineas
     m_data        RESD 1024 * 256
@@ -82,10 +96,35 @@ _start:
     mov rsi, m_data
     call load_file
 
+    mov [logger_len], DWORD 0
 
-    mov [registers + 28 * 4], DWORD 0x10008000 ; $gp = 28
+    set_register(28, DWORD 0x10008000); $gp = 28
 
+    mov rax, 0
+    push rax ; mi clock interno, para saber cada cuanto escribir
 _L1:
+    ; aumento el clock interno 
+    pop rax
+    inc rax
+    push rax
+
+
+    cmp rax, QWORD 100 ; cada 100 instrucciones, añade al registro
+    jne no_save_file
+    ; guardo en el log
+
+    mov rdi, filename_log
+    mov rsi, logger
+    mov edx, [logger_len]
+    call write_file
+
+    mov [logger_len], DWORD 0
+    
+    pop rax ; reinicio clock
+    mov rax, 0
+    push rax
+
+
 
 %if 0
     mov edx, [pc]
@@ -95,11 +134,24 @@ _L1:
     je _debug
 %endif
 
+no_save_file:
+
 
     mov edx, [pc]
     mov edi, [m_text + edx]
+
     mov rsi, inst
+
+    mov eax, [logger_len]
+    mov rdx, logger
+    add rdx, rax
+    mov ecx, [pc]
     call get_instruction
+
+    mov ebx, [logger_len]
+    add eax, ebx
+    mov [logger_len], eax; len += offset 
+
 
 %if 0
     mov rdi, inst

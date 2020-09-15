@@ -1,6 +1,27 @@
-O_RDONLY	equ	0
-O_WRONLY	equ	1
-O_RDWR		equ	2
+; https://stackoverflow.com/questions/48541868/how-to-append-to-a-file-using-x86-64-linux-system-calls
+
+O_ACCMODE     equ 0x3
+O_APPEND      equ 0x400
+O_ASYNC       equ 0x2000
+O_CLOEXEC     equ 0x80000
+O_CREAT       equ 0x40
+O_DIRECT      equ 0x4000
+O_DIRECTORY   equ 0x10000
+O_DSYNC       equ 0x1000
+O_EXCL        equ 0x80
+O_FSYNC       equ 0x101000
+O_LARGEFILE   equ 0x0
+O_NDELAY      equ 0x800
+O_NOATIME     equ 0x40000
+O_NOCTTY      equ 0x100
+O_NOFOLLOW    equ 0x20000
+O_NONBLOCK    equ 0x800
+O_RDONLY      equ 0x0
+O_RDWR        equ 0x2
+O_RSYNC       equ 0x101000
+O_SYNC        equ 0x101000
+O_TRUNC       equ 0x200
+O_WRONLY      equ 0x1
 
 SYS_READ	equ	0
 SYS_WRITE	equ	1
