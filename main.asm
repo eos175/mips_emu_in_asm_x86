@@ -3,11 +3,15 @@ SYS_EXIT    equ	60
 extern print_hex
 extern print_int
 extern print_inst
-
+extern print_reg
+extern print_screen
 extern get_instruction ; tmp para llevar un registro
 
+extern init
+extern randint
 
 
+%include "utils.asm"
 %include "mips.asm"
 %include "instruction.asm"
 %include "read_file.asm"
@@ -19,27 +23,34 @@ global _start
 ; c 100 deco, save file
 ; op=0x9 rs=0 rt=16 rd=0 shamt=0x0, func=0x3 imm=0x3 target=0x100003
 
+
 section .data
-    c_clock dd 0
-    pc dd 0 ; 0x00400000
+    c_clock         dd 0
 
-    filename_log db "mips_instruction.log", 0
+    filename_log    db "mips_instruction.log", 0
 
+    ; 64x64
+    m_screen_w      equ 64
+    m_screen_h      equ 64
+    m_screen_size   dd  m_screen_w * m_screen_h
 
 section .bss
 
-
     logger      RESB 16 * 1024
-    logger_len  RESD 1
+        .len    RESD 1
+    
 
-    ; 1MB -> 262144 lineas
-    m_data        RESD 1024 * 256
-    m_text        RESD 1024 * 256
+    m_pc         RESD 1 ; 0x00400000
 
-    registers   RESD 32
-    stack       RESD 256
+    m_data       RESD 1024 * 256 ; 1MB -> 262144 lineas
+    m_text       RESD 1024 * 256
 
-    inst: resb instruction_t_size
+    m_res        RESD 32
+    m_stack      RESD 256
+
+    m_screen     RESB m_screen_w * m_screen_h
+
+    m_inst resb instruction_t_size
 
 section .text
 
@@ -49,7 +60,7 @@ section .text
 
 donde obtienen argumentos
     https://gist.github.com/Gydo194/730c1775f1e05fdca6e9b0c175636f5b
-
+m_screen_size
 https://www.cs.uaf.edu/2017/fall/cs301/reference/x86_64.html
 https://cs.lmu.edu/~ray/notes/nasmtutorial/
 https://ncona.com/2019/12/debugging-assembly-with-gdb/
@@ -57,29 +68,26 @@ https://ncona.com/2019/12/debugging-assembly-with-gdb/
 
 b _L1
 run
-p/x (int[32])registers
-c 16392
+p/x (int[32])m_res
+c 16388 -> donde termina la pantalla
 
 b __beq.advance_pc
 run
-p/x (int[32])registers
+p/x (int[32])m_res
 i r eax ebx edx
+m_screen_size
 
 
-(pc / 4) +1 -> saber q linea es
+b __ori
+run
+b _L1
+c 30
+
 
 %endif
 
 
 _start:
-
-%if 0
-    mov eax, 976
-    mov ebx, 136
-    set_register(16, eax)
-    set_register(17, ebx)
-    _and(1, 16, 17)
-%endif
 
     pop r8
     cmp r8, 3 ; if (argc != 3) exit(0)
@@ -96,34 +104,46 @@ _start:
     mov rsi, m_data
     call load_file
 
-    mov [logger_len], DWORD 0
+    call init
 
+
+    ; https://superuser.com/questions/380059/display-characters-on-a-square-grid
+    ; https://stackoverflow.com/questions/5584806/extended-ascii-in-linux
+    ; lleno la pantalla de espacios
+    mov eax, [m_screen_size]
+_L00:
+    add eax, -4
+    mov [m_screen + eax], DWORD 0xb1b1b1b1; 0x20202020 ; b' ' * 4
+    jne _L00
+
+
+
+%if 0
+    ; para limpiar la pantalla
+    call canonical_off
+    print clear, clear_length	; limpia la pantalla
+%endif
+
+
+    mov rax, m_screen
     set_register(28, DWORD 0x10008000); $gp = 28
+    ;set_register(28, rax); $gp = 28
 
-    mov rax, 0
-    push rax ; mi clock interno, para saber cada cuanto escribir
 _L1:
-    ; aumento el clock interno 
-    pop rax
-    inc rax
-    push rax
-
-
-    cmp rax, QWORD 100 ; cada 100 instrucciones, añade al registro
+    mov eax, [c_clock]
+    inc eax
+    mov [c_clock], eax
+    cmp eax, DWORD 100 ; cada 100 instrucciones, añade al registro
     jne no_save_file
-    ; guardo en el log
 
+    ; guardo en el log
     mov rdi, filename_log
     mov rsi, logger
-    mov edx, [logger_len]
+    mov edx, [logger.len]
     call write_file
 
-    mov [logger_len], DWORD 0
-    
-    pop rax ; reinicio clock
-    mov rax, 0
-    push rax
-
+    mov [logger.len], DWORD 0
+    mov [c_clock], DWORD 0
 
 
 %if 0
@@ -136,21 +156,20 @@ _L1:
 
 no_save_file:
 
-
-    mov edx, [pc]
+    mov edx, [m_pc]
     mov edi, [m_text + edx]
 
-    mov rsi, inst
+    mov rsi, m_inst
 
-    mov eax, [logger_len]
+    mov eax, [logger.len]
     mov rdx, logger
     add rdx, rax
-    mov ecx, [pc]
+    mov ecx, [m_pc]
     call get_instruction
 
-    mov ebx, [logger_len]
+    mov ebx, [logger.len]
     add eax, ebx
-    mov [logger_len], eax; len += offset 
+    mov [logger.len], eax; len += offset 
 
 
 %if 0
@@ -164,12 +183,14 @@ no_save_file:
 %endif
 
 
-    mov al, BYTE[inst + instruction_t.op]
+    mov al, BYTE[m_inst + instruction_t.op]
 
     check_op(_lui_i, __lui)
     check_op(_lw_i, __lw)
     check_op(_addi_i, __addi)
     check_op(_addiu_i, __addi)
+    check_op(_ori_i, __ori)
+    check_op(_andi_i, __andi)
     check_op(_beq_i, __beq)
     check_op(_bne_i, __bne)
     check_op(_sw_i, __sw)
@@ -177,7 +198,9 @@ no_save_file:
     check_op(_jal_j, __jal)
 
     
-    mov al, BYTE[inst + instruction_t.func]
+    mov al, BYTE[m_inst + instruction_t.func]
+
+    check_func(_sys_s, __sys)
 
     check_func(_mul_r, __mul)
     check_func(_add_r, __add)
@@ -185,75 +208,132 @@ no_save_file:
     check_func(_jr_r, __jr)
 
 
-
 _debug:
-    mov rdi, inst
+    mov rdi, m_inst
+    mov esi, [m_pc]
     call print_inst
-
-    mov edi, [pc]  
-    add edi, 4  
-    call print_int
-
     jmp exit
 
+
+__sys:
+    get_register(2, eax) ; $v0 -> para saber que syscall es
+    get_register(4, ebx) ; $a0 -> 1er parametro
+    get_register(5, ecx) ; $a1 -> 1er parametro
+
+    cmp eax, DWORD 42 ; random 
+    je __random_int
+
+    cmp eax, DWORD 32 ; sleep 
+    je __sleep_ms
+
+    cmp eax, DWORD 10 ; exit 
+    je __exit
+
+__sys_e:
+
+    jmp _ET
+
+__random_int:
+    ; randint(0, $a1)
+
+    mov rdi, 0 
+    mov esi, ecx
+    call randint
+    set_register(4, eax) ; $a0
+
+    jmp _ET
+
+__sleep_ms:
+    ; sleep_ms($a0)
+
+    jmp _ET
+
+__exit:
+    jmp exit
+
+
+
+
 __j:
-    mov eax, [pc]
+    mov eax, [m_pc]
     add eax, 0x00400000
     and eax, 0xf0000000
 
-    mov ebx, [inst + instruction_t.target]
+    get_target(ebx)
     shl ebx, 2
 
     ; pc = (target << 2) | (pc & 0xf0000000)
     or eax, ebx
     sub eax, 0x00400000
-    mov [pc], eax
+    mov [m_pc], eax
     jmp _L1
 
 
 __jal:
-    mov eax, [pc]
-    add eax, 8
+    ; TODO(eos175) aqui debe ser PC + 4 
+    mov eax, [m_pc]
+    add eax, 4
     set_register(31, eax) ; $ra = PC + 8
     jmp __j
 
 
 __jr:
-    movsx   eax, BYTE[inst + instruction_t.rs]
+    get_rs(eax)
     get_register(eax, eax)
-    mov [pc], eax
+    mov [m_pc], eax
     jmp _L1
 
 
 __mul:
     ;  __mul rd, rs, rt
-    movsx   eax, BYTE[inst + instruction_t.rs]
-    movsx   ebx, BYTE[inst + instruction_t.rt]
+    get_rs(eax)
+    get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
-    mul     ebx
-    movsx   ebx, BYTE[inst + instruction_t.rd]
+    mul ebx
+    get_rd(ebx)
     set_register(ebx, eax)
     jmp _ET
 
 
 __add:
-    movsx   eax, BYTE[inst + instruction_t.rs]
-    movsx   ebx, BYTE[inst + instruction_t.rt]
+    get_rs(eax)
+    get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
     add ebx, eax
-    movsx   eax, BYTE[inst + instruction_t.rd]
+    get_rd(eax)
     set_register(eax, ebx)
     jmp _ET
 
 
 __addi:
-    movsx   eax, WORD[inst + instruction_t.imm]
-    movsx   ebx, BYTE[inst + instruction_t.rs]
+    get_imm(eax)
+    get_rs(ebx)
     get_register(ebx, ebx)
     add ebx, eax
-    movsx   eax, BYTE[inst + instruction_t.rt]
+    get_rt(eax)
+    set_register(eax, ebx)
+
+    jmp _ET
+
+
+__andi:
+    get_imm(eax)
+    get_rs(ebx)
+    get_register(ebx, ebx)
+    and ebx, eax
+    get_rt(eax)
+    set_register(eax, ebx)
+
+    jmp _ET
+
+__ori:
+    get_imm(eax)
+    get_rs(ebx)
+    get_register(ebx, ebx)
+    or ebx, eax
+    get_rt(eax)
     set_register(eax, ebx)
 
     jmp _ET
@@ -262,8 +342,8 @@ __addi:
 
 ; TODO(eos175) juntar beq, bne
 __beq:
-    movsx   eax, BYTE[inst + instruction_t.rs]
-    movsx   ebx, BYTE[inst + instruction_t.rt]
+    get_rs(eax)
+    get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
     cmp eax, ebx
@@ -271,8 +351,8 @@ __beq:
     jmp _ET
 
 __bne:
-    movsx   eax, BYTE[inst + instruction_t.rs]
-    movsx   ebx, BYTE[inst + instruction_t.rt]
+    get_rs(eax)
+    get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
     cmp eax, ebx
@@ -280,64 +360,144 @@ __bne:
     jmp _ET
 
 __advance_pc:
-    mov ebx, [pc]
+    mov ebx, [m_pc]
     add ebx, 0x00400000
 
-    movsx   eax, WORD[inst + instruction_t.imm]
+    get_imm(eax)
+
     shl eax, 2
     add ebx, eax
     sub ebx, 0x00400000
-    mov [pc], ebx
+    mov [m_pc], ebx
     jmp _ET
 
 
-
-
-
 __lui:
-    movsx   rax, BYTE[inst + instruction_t.rt]
-    movsx   ebx, WORD[inst + instruction_t.imm]
-    shl     ebx, 16
+    get_imm(ebx)
+    shl ebx, 16
+    get_rt(eax)
     set_register(eax, ebx)
 
     jmp _ET
 
 
 __lw:
-    mov    al, [inst + instruction_t.rt]
-    movsx  ebx, BYTE[inst + instruction_t.rs]
+    get_rs(ebx)
     get_register(ebx, ebx)
 
-    movsx  ecx, WORD[inst + instruction_t.imm]
-    add ecx, ebx
+    get_imm(ecx)
+    add ebx, ecx
 
-    ; 0xffff0000 -> teclado
+    cmp ebx, 0xffff0000 ; teclado
+    je __lw_keyboard
 
-    sub ecx, 0x10010000
-    mov ebx, [m_data + ecx]
+    cmp ebx, 0xffff0004 ; teclado
+    je __lw_keyboard
 
+
+    cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
+    jl __lw_screen
+
+    cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
+    jl __lw_data
+
+__lw_t1:
+    jmp _ET
+
+
+__lw_keyboard:
+    movsx ebx, BYTE[input_char]
+    get_rt(eax)
     set_register(eax, ebx)
+    jmp _ET
+
+
+__lw_screen:
+    sub ebx, 0x10008000
+    shr ebx, 2 ; / 4 ->  TODO(eos175) esto es por el with de mars
+    mov ecx, [m_screen + ebx]
+    get_rt(eax)
+    set_register(eax, ecx)
+    jmp _ET
+
+
+__lw_data:
+    sub ebx, 0x10010000
+    mov ecx, [m_data + ebx]
+    get_rt(eax)
+    set_register(eax, ecx)
+    jmp _ET
+
+
+__sw:
+    get_imm(eax)
+    get_rs(ebx)
+    get_register(ebx, ebx)
+    add ebx, eax
+
+
+    get_rt(eax)
+    get_register(eax, eax)
+
+    ; TODO(eos175) esto esta mal es guardar en esa direcion de memoria
+
+    cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
+    jl __sw_screen
+
+    cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
+    jl __sw_data
+
+
+__mico:    
 
     jmp _ET
 
-__sw:
-    movsx  eax, WORD[inst + instruction_t.imm]
-    movsx  ebx, BYTE[inst + instruction_t.rs]
-    get_register(ebx, ebx)
-    add ebx, eax
-    sub ecx, 0x10010000
-    movsx  eax, BYTE[inst + instruction_t.rt]
-    
-    ; TODO(eos175) esto esta mal es guardar en esa direcion de memoria
-    ; set_register(eax, ebx)
-    
+
+__sw_screen:
+    sub ebx, 0x10008000
+    shr ebx, 2 ; / 4 ->  TODO(eos175) esto es por el with de mars
+    cmp eax, 0x0
+    je __black
+
+__white:
+    mov [m_screen + ebx], BYTE 0xb1 ; '▒'
+    jmp _ET
+
+__black:
+    mov [m_screen + ebx], BYTE 0x20 ; ' '
+    jmp _ET
+
+
+__sw_data:
+    sub ebx, 0x10010000
+    mov [m_data + ebx], eax
+
     jmp _ET
 
 
 _ET:
-    mov edx, [pc]
+    mov edx, [m_pc]
     add edx, 4
-    mov [pc], edx
+    mov [m_pc], edx
+
+%if 1
+    mov rdi, m_res
+    call print_reg
+%endif
+
+
+
+
+%if 0
+    mov rdi, m_screen
+    call print_screen
+
+    getchar
+
+    ;unsetnonblocking
+    sleeptime
+    print clear, clear_length
+%endif
 
 %if 0
 

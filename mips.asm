@@ -1,7 +1,7 @@
  
 
-%define get_register(i ,r)      mov r, [registers + i*4]
-%define set_register(i, r)      mov [registers + i*4], r
+%define get_register(i ,r)      mov r, [m_res + i*4]
+%define set_register(i, r)      mov [m_res + i*4], r
 
 
 %define check_func(code, label)    __check_op code, label
@@ -15,8 +15,12 @@
 
 
 
-
-%define get_inst_rs(r)   movsx  r, BYTE[inst + instruction_t.rs]
+; en un registro de 32 bits
+%define get_rs(r)   movsx r, BYTE[m_inst + instruction_t.rs]
+%define get_rt(r)   movsx r, BYTE[m_inst + instruction_t.rt]
+%define get_rd(r)   movsx r, BYTE[m_inst + instruction_t.rd]
+%define get_imm(r)  movsx r, WORD[m_inst + instruction_t.imm]
+%define get_target(r)  mov r, [m_inst + instruction_t.target]
 
 
 
@@ -37,6 +41,9 @@ http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html
 %endif
 
 ;-------------------Format R [Funct]-------------------------------------;
+%define	_sys_s		0x0c ; TODO(eos175)     syscall
+
+
 %define	_add_r		0x20
 %define _addu_r		0x21
 %define _and_r		0x24

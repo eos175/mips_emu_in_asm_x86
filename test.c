@@ -1,6 +1,18 @@
 #include "stdint.h"
 #include "stdio.h"
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
+
+void init()
+{
+    srand(time(NULL));
+}
+
+int randint(int a, int b)
+{
+    return a + rand() % (b - a + 1);
+}
 
 
 void print_hex(const void *buf, int length)
@@ -24,6 +36,31 @@ void print_int(int a)
 
 }
 
+
+void print_screen(void *d)
+{
+    uint8_t *s = (uint8_t *)d;
+
+    for (int i = 0; i < 64 * 64; i++)
+    {
+        printf("%c%s", s[i],
+            (i + 1) % 64 == 0 ? "\r\n" : "");
+    }
+    
+}
+
+
+void print_reg(void *arr)
+{
+    for (int i = 0; i < 32; i ++) {
+        printf(
+            "%2d -> 0x%08x\n", i , ((int *)arr)[i]
+        );
+    }
+}
+
+
+
 typedef struct {
     uint8_t op, rs, rt, rd, shamt, func;
     uint16_t imm;
@@ -33,16 +70,14 @@ typedef struct {
 
 
 
-void print_inst(const void *m)
+void print_inst(const void *m, int pc)
 {
     instruction_t d = *(instruction_t *)m;
 
-    //  sizeof(instruction_t);
-    printf("\nop=%d rs=%d rt=%d rd=%d shamt=%d, func=%d imm=%d target=%d\n", 
-        d.op, d.rs, d.rt, d.rd, d.shamt, d.func, d.imm, d.target
-    );
-    printf("op=0x%x rs=0x%x rt=0x%x rd=0x%x shamt=0x%x, func=0x%x imm=0x%x target=0x%x\n", 
-        d.op, d.rs, d.rt, d.rd, d.shamt, d.func, d.imm, d.target
+    int line = (int)((float)(pc / 4) +1);
+
+    printf("line=%d pc=0x%x op=0x%x rs=%d rt=%d rd=%d shamt=0x%x, func=0x%x imm=0x%d target=0x%x\n", 
+        line, pc, d.op, d.rs, d.rt, d.rd, d.shamt, d.func, d.imm, d.target
     );
     
 }
@@ -69,7 +104,11 @@ int get_instruction(int t, void *m, char *k, int pc)
 
     int line = (int)((float)(pc / 4) +1);
 
-    // printf("pc=%d line=%d k=%p\n", pc, line, k);
+    /*
+    printf("line=%d pc=0x%x op=0x%x rs=%d rt=%d rd=%d shamt=0x%x, func=0x%x imm=0x%d target=0x%x\n", 
+        line, pc, d.op, d.rs, d.rt, d.rd, d.shamt, d.func, d.imm, d.target
+    );
+    */
 
     pc += 0x00400000;
 
