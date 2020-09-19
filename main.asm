@@ -52,7 +52,8 @@ section .bss
     m_res        RESD 32
     m_stack      RESD 256
 
-    m_screen     RESB m_screen_w * m_screen_h
+    m_screen_p     RESB m_screen_w * m_screen_h ; proxy a la pantalla real
+    m_screen     RESD m_screen_w * m_screen_h
 
     m_inst resb instruction_t_size
 
@@ -132,8 +133,8 @@ _start:
     ; lleno la pantalla de espacios
     mov eax, [m_screen_size]
 _L00:
-    add eax, -4
-    mov [m_screen + eax], DWORD 0xb1b1b1b1; 0x20202020 ; b' ' * 4
+    dec eax
+    mov [m_screen + eax * 4], DWORD 0xb1b1b1b1; 0x20202020 ; b' ' * 4
     jne _L00
 
 
@@ -145,11 +146,8 @@ _L00:
 %endif
 
 
-    mov rax, m_screen
     set_register(28, DWORD 0x10008000); $gp = 28
     set_register(29, DWORD 0x7fffeffc); $sp = 29
-    
-    ;set_register(28, rax); $gp = 28
 
 _L1:
     mov eax, [c_clock]
@@ -446,7 +444,7 @@ __lw:
 ; TODO(eos175) falta probar bien
 __lw_stack:
     sub ebx, 0x7fffeffc
-    mov ecx, [m_stack + (4 * 256) + ebx] ; para ponerlo en el limite
+    mov ecx, [m_stack + (4 * 128) + ebx] ; para ponerlo en el limite
     get_rt(eax)
     set_register(eax, ecx)
 
@@ -480,7 +478,7 @@ __lw_keyboard:
 
 __lw_screen:
     sub ebx, 0x10008000
-    shr ebx, 2 ; / 4 ->  TODO(eos175) esto es por el with de mars
+    ;shr ebx, 2 ; / 4 ->  TODO(eos175)  4 -> 1 bytes
     mov ecx, [m_screen + ebx]
     get_rt(eax)
     set_register(eax, ecx)
@@ -518,17 +516,22 @@ __sw:
 ; TODO(eos175) falta probar bien
 __sw_stack:
     sub ebx, 0x7fffeffc
-    mov [m_stack + (4 * 256) + ebx], eax
+    mov [m_stack + (4 * 128) + ebx], eax
 
     jmp _ET
 
 
 __sw_screen:
     sub ebx, 0x10008000
-    shr ebx, 2 ; / 4 ->  TODO(eos175) esto es por el with de mars
+%if 0
+    shr ebx, 2 ; / 4 ->  TODO(eos175) 4 -> 1 bytes
     cmp eax, 0x0
-    je __black
+    je __black ; screen 1 bytes
+%endif
+    mov [m_screen + ebx], eax ; screen 4 bytes
+    jmp _ET
 
+%if 0
 __white:
     mov [m_screen + ebx], BYTE 0xb1 ; '▒'
     jmp _ET
@@ -536,6 +539,7 @@ __white:
 __black:
     mov [m_screen + ebx], BYTE 0x20 ; ' '
     jmp _ET
+%endif
 
 
 __sw_data:

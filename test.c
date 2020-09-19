@@ -42,7 +42,7 @@ void print_int(int a)
 
 }
 
-
+/*
 void print_screen(void *d)
 {
     uint8_t *s = (uint8_t *)d;
@@ -54,7 +54,20 @@ void print_screen(void *d)
     }
     
 }
+*/
 
+
+void print_screen(void *d)
+{
+    int *s = (int *)d;
+
+    for (int i = 0; i < 64 * 64; i++)
+    {
+        printf("%c%s", s[i] == 0 ? 0x20 : 0xb1,
+            (i + 1) % 64 == 0 ? "\r\n" : "");
+    }
+    
+}
 
 void print_reg(void *arr)
 {
