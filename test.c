@@ -9,9 +9,9 @@ void init()
     srand(time(NULL));
 }
 
-int randint(int a, int b)
+int randint(int n)
 {
-    return a + rand() % (b - a + 1);
+    return rand() % n; // randint(30) -> 0 .. 29
 }
 
 
@@ -27,6 +27,12 @@ void print_hex(const void *buf, int length)
             (i + 1) % 63 == 0 ? "\r\n" : "");
     
     printf("\n");
+
+}
+
+void print_key(int a)
+{
+    printf("key=%d\n", a);
 
 }
 
@@ -104,11 +110,11 @@ int get_instruction(int t, void *m, char *k, int pc)
 
     int line = (int)((float)(pc / 4) +1);
 
-    /*
+
     printf("line=%d pc=0x%x op=0x%x rs=%d rt=%d rd=%d shamt=0x%x, func=0x%x imm=0x%d target=0x%x\n", 
         line, pc, d.op, d.rs, d.rt, d.rd, d.shamt, d.func, d.imm, d.target
     );
-    */
+ 
 
     pc += 0x00400000;
 

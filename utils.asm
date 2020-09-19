@@ -34,15 +34,17 @@ section .data
 ; Esto es para hacer un sleep
 timespec:
 tv_sec  dq 0
-tv_nsec dq 9000000 ;200 000 000
+tv_nsec dq 80000000 ;200 000 000
 
 
+%if 0
 section .bss
 
     input_char RESB 1
 
 section .text
 
+%endif
 
 
 ; Este par que están tienen que ver con lo de consola y no bloquearla, uselos tal cual

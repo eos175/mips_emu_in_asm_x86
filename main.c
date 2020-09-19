@@ -4,6 +4,8 @@
 
 uint32_t hex2int(const char *str);
 uint32_t xtou64(const char *str);
+int randint(int, int);
+void init();
 
 /*
 
@@ -13,12 +15,18 @@ uint32_t xtou64(const char *str);
 
 int main(int argc, char const *argv[])
 {
-
+    init();
     uint32_t a = xtou64("0000000c");
     uint32_t b = hex2int("0000000c");
 
 
-    printf("a=%08x b=%d\n", a, b);
+    printf("a=%08x b=%d\n", a, randint(0, 62));
+
+    for (;;) {
+        a =  randint(0, 62);
+        if (a == 62) break;
+        printf("a=%d\n", a);
+    }
 
     return 0;
 }

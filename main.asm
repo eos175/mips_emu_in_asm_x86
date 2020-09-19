@@ -2,6 +2,7 @@ SYS_EXIT    equ	60
 
 extern print_hex
 extern print_int
+extern print_key
 extern print_inst
 extern print_reg
 extern print_screen
@@ -35,6 +36,9 @@ section .data
     m_screen_size   dd  m_screen_w * m_screen_h
 
 section .bss
+
+    input_char RESB 1
+
 
     logger      RESB 16 * 1024
         .len    RESD 1
@@ -84,6 +88,22 @@ b _L1
 c 30
 
 
+
+
+Program received signal SIGSEGV, Segmentation fault.
+__white () at main.asm:501
+501	    mov [m_screen + ebx], BYTE 0xb1
+
+(gdb) i r eax ebx ecx
+eax            0x4b0               1200
+ebx            0x3bffe000          1006624768
+ecx            0x0                 0
+
+
+(gdb) p/x (int[32])m_res
+$1 = {0x0, 0x10010000, 0x10009f7c, 0x0, 0x1f, 0x1f, 0x64, 0x0, 0xffff0000, 0x1, 0x0, 0x64, 0x0, 0x0, 0x0, 
+  0x64, 0x0, 0x0, 0x0, 0x1f, 0x1f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10008000, 0x0, 0x0, 0x4b0}
+
 %endif
 
 
@@ -118,7 +138,7 @@ _L00:
 
 
 
-%if 0
+%if 1
     ; para limpiar la pantalla
     call canonical_off
     print clear, clear_length	; limpia la pantalla
@@ -127,6 +147,8 @@ _L00:
 
     mov rax, m_screen
     set_register(28, DWORD 0x10008000); $gp = 28
+    set_register(29, DWORD 0x7fffeffc); $sp = 29
+    
     ;set_register(28, rax); $gp = 28
 
 _L1:
@@ -140,10 +162,25 @@ _L1:
     mov rdi, filename_log
     mov rsi, logger
     mov edx, [logger.len]
-    call write_file
+    ;call write_file
 
     mov [logger.len], DWORD 0
     mov [c_clock], DWORD 0
+
+
+    ; pinta la pantalla
+%if 1
+    mov rdi, m_screen
+    call print_screen
+
+    getchar
+
+    ;unsetnonblocking
+    sleeptime
+    print clear, clear_length
+%endif
+
+
 
 
 %if 0
@@ -236,8 +273,7 @@ __sys_e:
 __random_int:
     ; randint(0, $a1)
 
-    mov rdi, 0 
-    mov esi, ecx
+    mov edi, ecx 
     call randint
     set_register(4, eax) ; $a0
 
@@ -388,8 +424,11 @@ __lw:
     get_imm(ecx)
     add ebx, ecx
 
+
+    ; http://www.cs.uwm.edu/classes/cs315/Bacon/Lecture/HTML/ch14s03.html
+    ; recv_ctrl -> se pone en 1 cuando se preciona una tecla
     cmp ebx, 0xffff0000 ; teclado
-    je __lw_keyboard
+    je __lw_keyboard_ctrl
 
     cmp ebx, 0xffff0004 ; teclado
     je __lw_keyboard
@@ -401,14 +440,41 @@ __lw:
     cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
     jl __lw_data
 
-__lw_t1:
+    jmp __lw_stack
+
+
+; TODO(eos175) falta probar bien
+__lw_stack:
+    sub ebx, 0x7fffeffc
+    mov ecx, [m_stack + (4 * 256) + ebx] ; para ponerlo en el limite
+    get_rt(eax)
+    set_register(eax, ecx)
+
+    jmp _ET
+
+
+; parche para q siempre lea el teclado
+__lw_keyboard_ctrl:
+    movsx ebx, BYTE[input_char]
+    cmp ebx, 0
+    je __ignore_k_01
+    mov ebx, 0x1
+__ignore_k_01:
+    get_rt(eax)
+    set_register(eax, ebx)
     jmp _ET
 
 
 __lw_keyboard:
+    movsx rdi, BYTE[input_char]
+    call print_key
+
     movsx ebx, BYTE[input_char]
     get_rt(eax)
     set_register(eax, ebx)
+
+    mov [input_char], BYTE 0 ; TODO(eos175) esto no debe de estar
+
     jmp _ET
 
 
@@ -435,7 +501,6 @@ __sw:
     get_register(ebx, ebx)
     add ebx, eax
 
-
     get_rt(eax)
     get_register(eax, eax)
 
@@ -447,8 +512,13 @@ __sw:
     cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
     jl __sw_data
 
+    jmp __sw_stack
 
-__mico:    
+
+; TODO(eos175) falta probar bien
+__sw_stack:
+    sub ebx, 0x7fffeffc
+    mov [m_stack + (4 * 256) + ebx], eax
 
     jmp _ET
 
@@ -480,24 +550,11 @@ _ET:
     add edx, 4
     mov [m_pc], edx
 
-%if 1
+%if 0
     mov rdi, m_res
     call print_reg
 %endif
 
-
-
-
-%if 0
-    mov rdi, m_screen
-    call print_screen
-
-    getchar
-
-    ;unsetnonblocking
-    sleeptime
-    print clear, clear_length
-%endif
 
 %if 0
 
