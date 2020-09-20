@@ -9,7 +9,9 @@ build:
 	ld -lc -I /lib64/ld-linux-x86-64.so.2 main.o test.o -o hello.app
 
 debug:
-	gdb --args ./hello.app snake.text.hex snake.data.hex
+	#gdb --args ./hello.app snake.text.hex snake.data.hex
+	gdb --args ./hello.app def.text.hex def.data.hex
+	#gdb --args ./hello.app pong.text.hex pong.data.hex
 
 
 

@@ -61,7 +61,7 @@ void print_screen(void *d)
 {
     int *s = (int *)d;
 
-    for (int i = 0; i < 64 * 64; i++)
+    for (int i = 0; i < 64 * 32; i++)
     {
         printf("%c%s", s[i] == 0 ? 0x20 : 0xb1,
             (i + 1) % 64 == 0 ? "\r\n" : "");
@@ -123,11 +123,11 @@ int get_instruction(int t, void *m, char *k, int pc)
 
     int line = (int)((float)(pc / 4) +1);
 
-
+    if (1)
     printf("line=%d pc=0x%x op=0x%x rs=%d rt=%d rd=%d shamt=0x%x, func=0x%x imm=0x%d target=0x%x\n", 
         line, pc, d.op, d.rs, d.rt, d.rd, d.shamt, d.func, d.imm, d.target
     );
- 
+    
 
     pc += 0x00400000;
 

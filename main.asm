@@ -12,6 +12,11 @@ extern init
 extern randint
 
 
+
+%define PRINT_SCREEN      1
+%define DEBUG             1
+
+
 %include "utils.asm"
 %include "mips.asm"
 %include "instruction.asm"
@@ -32,7 +37,7 @@ section .data
 
     ; 64x64
     m_screen_w      equ 64
-    m_screen_h      equ 64
+    m_screen_h      equ 32
     m_screen_size   dd  m_screen_w * m_screen_h
 
 section .bss
@@ -50,14 +55,15 @@ section .bss
     m_text       RESD 1024 * 256
 
     m_res        RESD 32
-    m_stack      RESD 256
+    m_stack      RESD 1024
 
-    m_screen_p     RESB m_screen_w * m_screen_h ; proxy a la pantalla real
+    ;m_screen_p     RESB m_screen_w * m_screen_h ; proxy a la pantalla real
     m_screen     RESD m_screen_w * m_screen_h
 
     m_inst resb instruction_t_size
 
 section .text
+
 
 
 
@@ -88,22 +94,6 @@ run
 b _L1
 c 30
 
-
-
-
-Program received signal SIGSEGV, Segmentation fault.
-__white () at main.asm:501
-501	    mov [m_screen + ebx], BYTE 0xb1
-
-(gdb) i r eax ebx ecx
-eax            0x4b0               1200
-ebx            0x3bffe000          1006624768
-ecx            0x0                 0
-
-
-(gdb) p/x (int[32])m_res
-$1 = {0x0, 0x10010000, 0x10009f7c, 0x0, 0x1f, 0x1f, 0x64, 0x0, 0xffff0000, 0x1, 0x0, 0x64, 0x0, 0x0, 0x0, 
-  0x64, 0x0, 0x0, 0x0, 0x1f, 0x1f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10008000, 0x0, 0x0, 0x4b0}
 
 %endif
 
@@ -139,7 +129,7 @@ _L00:
 
 
 
-%if 1
+%if PRINT_SCREEN
     ; para limpiar la pantalla
     call canonical_off
     print clear, clear_length	; limpia la pantalla
@@ -166,8 +156,9 @@ _L1:
     mov [c_clock], DWORD 0
 
 
+%if PRINT_SCREEN
     ; pinta la pantalla
-%if 1
+
     mov rdi, m_screen
     call print_screen
 
@@ -176,20 +167,28 @@ _L1:
     ;unsetnonblocking
     sleeptime
     print clear, clear_length
+
 %endif
 
 
-
-
-%if 0
-    mov edx, [pc]
-    ;mov edi, [m_text + edx]
-    ;cmp edi, DWORD 0x0000000c
-    cmp edx, DWORD 3180
-    je _debug
-%endif
 
 no_save_file:
+
+
+%if DEBUG
+    ; para en un pc en especifico
+    mov edx, [m_pc]
+    cmp edx, 0x6e4
+    jne __ignore_t1
+
+__p102:
+    mov edx, [m_pc] ; nop
+
+__ignore_t1:
+
+%endif
+
+
 
     mov edx, [m_pc]
     mov edi, [m_text + edx]
@@ -229,18 +228,28 @@ no_save_file:
     check_op(_beq_i, __beq)
     check_op(_bne_i, __bne)
     check_op(_sw_i, __sw)
+    check_op(_slti_i, __slti)
+    check_op(_blez_i, __blez)
+    check_op(_bgtz_i, __bgtz)
+
     check_op(_j_j, __j)
     check_op(_jal_j, __jal)
 
-    
     mov al, BYTE[m_inst + instruction_t.func]
 
     check_func(_sys_s, __sys)
+
+
+    check_func(_xor_r, __xor)
 
     check_func(_mul_r, __mul)
     check_func(_add_r, __add)
     check_func(_addu_r, __add)
     check_func(_jr_r, __jr)
+    check_func(_sub_r, __sub)
+
+    check_func(_slt_r, __slt)
+    check_func(_sll_r, __sll) ; TODO(eos175) cuidado con esto, entra casi siempre por 0x00
 
 
 _debug:
@@ -248,6 +257,7 @@ _debug:
     mov esi, [m_pc]
     call print_inst
     jmp exit
+
 
 
 __sys:
@@ -285,6 +295,25 @@ __sleep_ms:
 __exit:
     jmp exit
 
+
+
+
+; line=430 pc=0x6b4 op=0x0 rs=0 rt=5 rd=8 shamt=0x6, func=0x0 imm=0x16768 target=0x54180
+__sll:
+    get_rt(eax)
+    get_register(eax, eax)
+    get_shamt(ebx)
+
+.L0:
+    cmp ebx, 0
+    je .E0
+    shl eax, 1
+    dec ebx
+    jmp .L0
+.E0
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
 
 
 
@@ -330,14 +359,85 @@ __mul:
     jmp _ET
 
 
+__sub:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    sub eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+
+__xor:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    xor eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+
 __add:
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
-    add ebx, eax
-    get_rd(eax)
-    set_register(eax, ebx)
+    add eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+
+%if 0
+
+if rs < rt
+    reg[rd] = 1
+else
+    reg[rd] = 0
+
+%endif
+
+
+__slt:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    get_rd(ecx)
+    cmp eax, ebx
+    jl .L0
+    set_register(ecx, DWORD 0)
+    jmp _ET
+.L0:
+    set_register(ecx, DWORD 1)
+    jmp _ET
+
+
+
+%if 0
+
+if rs < imm
+    reg[rd] = 1
+else
+    reg[rd] = 0
+
+%endif
+
+__slti:
+    get_imm(eax)
+    get_rs(ebx)
+    get_register(ebx, ebx)
+    get_rt(ecx)
+    cmp ebx, eax
+    jl .L0
+    set_register(ecx, DWORD 0)
+    jmp _ET
+.L0:
+    set_register(ecx, DWORD 1)
     jmp _ET
 
 
@@ -348,7 +448,6 @@ __addi:
     add ebx, eax
     get_rt(eax)
     set_register(eax, ebx)
-
     jmp _ET
 
 
@@ -370,6 +469,20 @@ __ori:
     get_rt(eax)
     set_register(eax, ebx)
 
+    jmp _ET
+
+__bgtz:
+    get_rs(eax)
+    get_register(eax, eax)
+    cmp eax, 0
+    ja __advance_pc
+    jmp _ET
+
+__blez:
+    get_rs(eax)
+    get_register(eax, eax)
+    cmp eax, 0
+    jle __advance_pc
     jmp _ET
 
 
@@ -444,7 +557,7 @@ __lw:
 ; TODO(eos175) falta probar bien
 __lw_stack:
     sub ebx, 0x7fffeffc
-    mov ecx, [m_stack + (4 * 128) + ebx] ; para ponerlo en el limite
+    mov ecx, [m_stack + (4 * 512) +  ebx] ; para ponerlo en el limite
     get_rt(eax)
     set_register(eax, ecx)
 
@@ -504,6 +617,12 @@ __sw:
 
     ; TODO(eos175) esto esta mal es guardar en esa direcion de memoria
 
+    cmp ebx, 0xffff0000 ; teclado
+    je __sw_keyboard
+
+    cmp ebx, 0xffff0004 ; teclado
+    je __sw_keyboard
+
     cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
     jl __sw_screen
 
@@ -513,10 +632,16 @@ __sw:
     jmp __sw_stack
 
 
+; TODO(eos175) falta probar
+__sw_keyboard:
+    mov [input_char], al ; solo 1 byte
+    jmp _ET
+
+
 ; TODO(eos175) falta probar bien
 __sw_stack:
     sub ebx, 0x7fffeffc
-    mov [m_stack + (4 * 128) + ebx], eax
+    mov [m_stack + (4 * 512)+ ebx], eax
 
     jmp _ET
 
@@ -554,22 +679,11 @@ _ET:
     add edx, 4
     mov [m_pc], edx
 
-%if 0
+
+%if (DEBUG && 0)
     mov rdi, m_res
     call print_reg
 %endif
-
-
-%if 0
-
-    mov rdi, inst
-    call print_inst
-
-    movsx rdi, DWORD[pc]
-    call print_int
-
-%endif
-
 
     jmp _L1
 

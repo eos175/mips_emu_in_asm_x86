@@ -21,6 +21,7 @@
 %define get_rd(r)   movsx r, BYTE[m_inst + instruction_t.rd]
 %define get_imm(r)  movsx r, WORD[m_inst + instruction_t.imm]
 %define get_target(r)  mov r, [m_inst + instruction_t.target]
+%define get_shamt(r)   movsx r, BYTE[m_inst + instruction_t.shamt]
 
 
 
