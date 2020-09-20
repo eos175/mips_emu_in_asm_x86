@@ -2,19 +2,14 @@ SYS_EXIT    equ	60
 
 extern print_hex
 extern print_int
-extern print_key
 extern print_inst
 extern print_reg
 extern print_screen
 extern get_instruction ; tmp para llevar un registro
 
-extern init
-extern randint
-
-
 
 %define PRINT_SCREEN      1
-%define DEBUG             1
+%define DEBUG             0
 
 
 %include "utils.asm"
@@ -26,9 +21,6 @@ extern randint
 
 global _start
 
-; c 100 deco, save file
-; op=0x9 rs=0 rt=16 rd=0 shamt=0x0, func=0x3 imm=0x3 target=0x100003
-
 
 section .data
     c_clock         dd 0
@@ -37,15 +29,17 @@ section .data
 
     ; 64x64
     m_screen_w      equ 64
-    m_screen_h      equ 32
+    m_screen_h      equ 64
     m_screen_size   dd  m_screen_w * m_screen_h
+
+    ; m_pc            dd 0x00400000
 
 section .bss
 
     input_char RESB 1
 
 
-    logger      RESB 16 * 1024
+    logger      RESB 16 * 8 * 1024
         .len    RESD 1
     
 
@@ -115,8 +109,6 @@ _start:
     mov rsi, m_data
     call load_file
 
-    call init
-
 
     ; https://superuser.com/questions/380059/display-characters-on-a-square-grid
     ; https://stackoverflow.com/questions/5584806/extended-ascii-in-linux
@@ -124,7 +116,7 @@ _start:
     mov eax, [m_screen_size]
 _L00:
     dec eax
-    mov [m_screen + eax * 4], DWORD 0xb1b1b1b1; 0x20202020 ; b' ' * 4
+    mov [m_screen + eax * 4], DWORD 0 ;0xb1b1b1b1; 0x20202020 ; b' ' * 4
     jne _L00
 
 
@@ -143,8 +135,8 @@ _L1:
     mov eax, [c_clock]
     inc eax
     mov [c_clock], eax
-    cmp eax, DWORD 100 ; cada 100 instrucciones, añade al registro
-    jne no_save_file
+    cmp eax, DWORD 600 ; cada 100 instrucciones, añade al registro
+    jne _no_save_file
 
     ; guardo en el log
     mov rdi, filename_log
@@ -154,7 +146,6 @@ _L1:
 
     mov [logger.len], DWORD 0
     mov [c_clock], DWORD 0
-
 
 %if PRINT_SCREEN
     ; pinta la pantalla
@@ -170,24 +161,21 @@ _L1:
 
 %endif
 
-
-
-no_save_file:
-
+_no_save_file:
 
 %if DEBUG
     ; para en un pc en especifico
+
     mov edx, [m_pc]
-    cmp edx, 0x6e4
-    jne __ignore_t1
+    cmp edx, 4
+    jne _C1
 
-__p102:
-    mov edx, [m_pc] ; nop
+__stop_pc:
+    nop
 
-__ignore_t1:
+_C1:
 
 %endif
-
 
 
     mov edx, [m_pc]
@@ -219,37 +207,40 @@ __ignore_t1:
 
     mov al, BYTE[m_inst + instruction_t.op]
 
+    check_op(0x00, __type_r)
+
+    check_op(_j_j, __j)
+    check_op(_jal_j, __jal)
+
     check_op(_lui_i, __lui)
     check_op(_lw_i, __lw)
+    check_op(_sw_i, __sw)
     check_op(_addi_i, __addi)
     check_op(_addiu_i, __addi)
     check_op(_ori_i, __ori)
     check_op(_andi_i, __andi)
-    check_op(_beq_i, __beq)
-    check_op(_bne_i, __bne)
-    check_op(_sw_i, __sw)
     check_op(_slti_i, __slti)
     check_op(_blez_i, __blez)
     check_op(_bgtz_i, __bgtz)
+    check_op(_beq_i, __beq)
+    check_op(_bne_i, __bne)
 
-    check_op(_j_j, __j)
-    check_op(_jal_j, __jal)
+__type_r:
 
     mov al, BYTE[m_inst + instruction_t.func]
 
     check_func(_sys_s, __sys)
 
-
-    check_func(_xor_r, __xor)
-
-    check_func(_mul_r, __mul)
+    check_func(_jr_r, __jr)
+    check_func(_xor_r, __xor) ; TODO(eos175) falta agregar los demas bitwise
     check_func(_add_r, __add)
     check_func(_addu_r, __add)
-    check_func(_jr_r, __jr)
     check_func(_sub_r, __sub)
-
+    check_func(_mul_r, __mul)
+    check_func(_div_r, __div)
     check_func(_slt_r, __slt)
-    check_func(_sll_r, __sll) ; TODO(eos175) cuidado con esto, entra casi siempre por 0x00
+    check_func(_srl_r, __srl)
+    check_func(_sll_r, __sll)
 
 
 _debug:
@@ -259,14 +250,13 @@ _debug:
     jmp exit
 
 
-
 __sys:
     get_register(2, eax) ; $v0 -> para saber que syscall es
     get_register(4, ebx) ; $a0 -> 1er parametro
     get_register(5, ecx) ; $a1 -> 1er parametro
 
     cmp eax, DWORD 42 ; random 
-    je __random_int
+    je __randint
 
     cmp eax, DWORD 32 ; sleep 
     je __sleep_ms
@@ -274,17 +264,19 @@ __sys:
     cmp eax, DWORD 10 ; exit 
     je __exit
 
-__sys_e:
-
+__e:
     jmp _ET
 
-__random_int:
-    ; randint(0, $a1)
 
-    mov edi, ecx 
-    call randint
-    set_register(4, eax) ; $a0
-
+__randint:
+    ; para no usar el random de c voy a usar el clock virtual como generador seudoaleatorio
+    ; rand() % n
+    ; https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly/8232170
+    
+    mov eax, [c_clock]
+    cqd
+    idiv ecx
+    set_register(4, edx) ; $a0
     jmp _ET
 
 __sleep_ms:
@@ -298,57 +290,86 @@ __exit:
 
 
 
-; line=430 pc=0x6b4 op=0x0 rs=0 rt=5 rd=8 shamt=0x6, func=0x0 imm=0x16768 target=0x54180
-__sll:
+__srl: ; rd = rt >> shamt
     get_rt(eax)
     get_register(eax, eax)
     get_shamt(ebx)
+.L0:
+    cmp ebx, 0
+    je .E0
+    shr eax, 1
+    dec ebx
+    jmp .L0
+.E0:
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
 
+
+__sll: ; rd = rt << shamt
+    get_rt(eax)
+    get_register(eax, eax)
+    get_shamt(ebx)
 .L0:
     cmp ebx, 0
     je .E0
     shl eax, 1
     dec ebx
     jmp .L0
-.E0
+.E0:
     get_rd(ebx)
     set_register(ebx, eax)
     jmp _ET
 
 
 
-__j:
+__jal: ; $ra = PC + 4
+    mov eax, [m_pc]
+    add eax, 4
+    set_register(31, eax)
+
+__j: ; pc = (target << 2) | (pc & 0xf0000000)
     mov eax, [m_pc]
     add eax, 0x00400000
     and eax, 0xf0000000
-
     get_target(ebx)
     shl ebx, 2
-
-    ; pc = (target << 2) | (pc & 0xf0000000)
     or eax, ebx
     sub eax, 0x00400000
     mov [m_pc], eax
     jmp _L1
 
-
-__jal:
-    ; TODO(eos175) aqui debe ser PC + 4 
-    mov eax, [m_pc]
-    add eax, 4
-    set_register(31, eax) ; $ra = PC + 8
-    jmp __j
-
-
-__jr:
+__jr: ; PC = rs
     get_rs(eax)
     get_register(eax, eax)
     mov [m_pc], eax
     jmp _L1
 
 
-__mul:
-    ;  __mul rd, rs, rt
+
+__add:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    add eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+__sub: ; rd = rs - rt
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    sub eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+
+
+__mul: ; rd = rs * rt
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
@@ -358,16 +379,17 @@ __mul:
     set_register(ebx, eax)
     jmp _ET
 
-
-__sub:
+__div: ; rd = rs / rt
+    ; https://stackoverflow.com/questions/45506439/division-of-two-numbers-in-nasm
+    xor edx, edx
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
-    sub eax, ebx
+    div ebx
     get_rd(ebx)
     set_register(ebx, eax)
-    jmp _ET
+    jmp _ET    
 
 
 __xor:
@@ -381,23 +403,13 @@ __xor:
     jmp _ET
 
 
-__add:
-    get_rs(eax)
-    get_rt(ebx)
-    get_register(eax, eax)
-    get_register(ebx, ebx)
-    add eax, ebx
-    get_rd(ebx)
-    set_register(ebx, eax)
-    jmp _ET
-
 
 %if 0
 
 if rs < rt
-    reg[rd] = 1
+    rd = 1
 else
-    reg[rd] = 0
+    rd = 0
 
 %endif
 
@@ -421,9 +433,9 @@ __slt:
 %if 0
 
 if rs < imm
-    reg[rd] = 1
+    rd = 1;
 else
-    reg[rd] = 0
+    rd = 0;
 
 %endif
 
@@ -458,7 +470,6 @@ __andi:
     and ebx, eax
     get_rt(eax)
     set_register(eax, ebx)
-
     jmp _ET
 
 __ori:
@@ -468,26 +479,18 @@ __ori:
     or ebx, eax
     get_rt(eax)
     set_register(eax, ebx)
-
-    jmp _ET
-
-__bgtz:
-    get_rs(eax)
-    get_register(eax, eax)
-    cmp eax, 0
-    ja __advance_pc
-    jmp _ET
-
-__blez:
-    get_rs(eax)
-    get_register(eax, eax)
-    cmp eax, 0
-    jle __advance_pc
     jmp _ET
 
 
 
-; TODO(eos175) juntar beq, bne
+%if 0
+
+if rs == rt 
+    PC += imm << 2;
+else 
+    PC += 4;
+
+%endif
 __beq:
     get_rs(eax)
     get_rt(ebx)
@@ -497,7 +500,7 @@ __beq:
     je __advance_pc
     jmp _ET
 
-__bne:
+__bne: ; if rs != rt ... 
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
@@ -506,12 +509,25 @@ __bne:
     jne __advance_pc
     jmp _ET
 
+__bgtz: ; if rs > 0 ... 
+    get_rs(eax)
+    get_register(eax, eax)
+    cmp eax, 0
+    ja __advance_pc
+    jmp _ET
+
+__blez: ; if rs <= 0 ...
+    get_rs(eax)
+    get_register(eax, eax)
+    cmp eax, 0
+    jle __advance_pc
+    jmp _ET
+
+
 __advance_pc:
     mov ebx, [m_pc]
     add ebx, 0x00400000
-
     get_imm(eax)
-
     shl eax, 2
     add ebx, eax
     sub ebx, 0x00400000
@@ -519,12 +535,13 @@ __advance_pc:
     jmp _ET
 
 
-__lui:
+
+
+__lui: ; rt = imm << 16
     get_imm(ebx)
     shl ebx, 16
     get_rt(eax)
     set_register(eax, ebx)
-
     jmp _ET
 
 
@@ -536,10 +553,8 @@ __lw:
     add ebx, ecx
 
 
-    ; http://www.cs.uwm.edu/classes/cs315/Bacon/Lecture/HTML/ch14s03.html
-    ; recv_ctrl -> se pone en 1 cuando se preciona una tecla
     cmp ebx, 0xffff0000 ; teclado
-    je __lw_keyboard_ctrl
+    je __lw_key_recv_ctrl
 
     cmp ebx, 0xffff0004 ; teclado
     je __lw_keyboard
@@ -548,7 +563,7 @@ __lw:
     cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
     jl __lw_screen
 
-    cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
+    cmp ebx, 0x20040000 ; $data [0x10010000 .. 0x10040000]
     jl __lw_data
 
     jmp __lw_stack
@@ -556,36 +571,32 @@ __lw:
 
 ; TODO(eos175) falta probar bien
 __lw_stack:
-    sub ebx, 0x7fffeffc
+    not ebx
+    add ebx, 0x7fffeffc
     mov ecx, [m_stack + (4 * 512) +  ebx] ; para ponerlo en el limite
     get_rt(eax)
     set_register(eax, ecx)
-
     jmp _ET
 
 
-; parche para q siempre lea el teclado
-__lw_keyboard_ctrl:
+; http://www.cs.uwm.edu/classes/cs315/Bacon/Lecture/HTML/ch14s03.html
+; recv_ctrl -> se pone en 1 cuando se preciona una tecla
+__lw_key_recv_ctrl:
     movsx ebx, BYTE[input_char]
     cmp ebx, 0
-    je __ignore_k_01
+    je .L0
     mov ebx, 0x1
-__ignore_k_01:
+.L0:
     get_rt(eax)
     set_register(eax, ebx)
     jmp _ET
 
 
 __lw_keyboard:
-    movsx rdi, BYTE[input_char]
-    call print_key
-
     movsx ebx, BYTE[input_char]
     get_rt(eax)
     set_register(eax, ebx)
-
-    mov [input_char], BYTE 0 ; TODO(eos175) esto no debe de estar
-
+    mov [input_char], BYTE 0 ; TODO(eos175) esto lo debe hacer el usuario -> sw $zero, 0xffff0004
     jmp _ET
 
 
@@ -597,13 +608,13 @@ __lw_screen:
     set_register(eax, ecx)
     jmp _ET
 
-
 __lw_data:
     sub ebx, 0x10010000
     mov ecx, [m_data + ebx]
     get_rt(eax)
     set_register(eax, ecx)
     jmp _ET
+
 
 
 __sw:
@@ -615,8 +626,6 @@ __sw:
     get_rt(eax)
     get_register(eax, eax)
 
-    ; TODO(eos175) esto esta mal es guardar en esa direcion de memoria
-
     cmp ebx, 0xffff0000 ; teclado
     je __sw_keyboard
 
@@ -626,23 +635,22 @@ __sw:
     cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
     jl __sw_screen
 
-    cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
+    cmp ebx, 0x20040000 ; $gp [0x10010000 .. 0x10040000]
     jl __sw_data
 
     jmp __sw_stack
 
 
-; TODO(eos175) falta probar
 __sw_keyboard:
     mov [input_char], al ; solo 1 byte
     jmp _ET
 
 
-; TODO(eos175) falta probar bien
+; TODO(eos175) falta probar
 __sw_stack:
-    sub ebx, 0x7fffeffc
+    not ebx
+    add ebx, 0x7fffeffc
     mov [m_stack + (4 * 512)+ ebx], eax
-
     jmp _ET
 
 
@@ -670,7 +678,6 @@ __black:
 __sw_data:
     sub ebx, 0x10010000
     mov [m_data + ebx], eax
-
     jmp _ET
 
 
@@ -680,13 +687,12 @@ _ET:
     mov [m_pc], edx
 
 
-%if (DEBUG && 0)
+%if (DEBUG > 3)
     mov rdi, m_res
     call print_reg
 %endif
 
     jmp _L1
-
 
 
 exit:

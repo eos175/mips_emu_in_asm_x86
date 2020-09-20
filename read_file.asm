@@ -77,7 +77,7 @@ load_file:
     push rax ; fd
 
 	; len = read(fd, buf, 1024);
-.L1
+.L1:
     push rax
 
     mov rdi, rax

@@ -6,7 +6,6 @@
 
 %define check_func(code, label)    __check_op code, label
 
-
 %define check_op(code, label)   __check_op code, label
 %macro __check_op 2
     cmp al, %1
@@ -56,7 +55,7 @@ http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html
 %define _mflo_r		0x12
 %define _mtlo_r		0x13
 %define _mult_r		0x18
-%define _mul_r		0x02     ; TODO(eos175)
+%define _mul_r		0x02    ; TODO(eos175) op=0x1c
 %define _multu_r	0x19
 %define _nor_r		0x27
 %define _xor_r		0x26
