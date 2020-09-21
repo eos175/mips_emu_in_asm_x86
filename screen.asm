@@ -1,26 +1,26 @@
 init_screen:
     mov     edx, m_screen_size
     mov     eax, 1
-    xor     ecx, ecx
-.L2:
-    add     eax, 1
-    sub     edx, 1
-    je      .L7
-.L5:
+    mov     ecx, 0
+.L0:
+    inc     eax
+    dec     edx
+    je      .L2
+.L1:
     cmp     eax, m_screen_w
     je      .L3
-    add     ecx, 1
-    add     eax, 1
-    sub     edx, 1
-    jne     .L5
-.L7:
+    inc     ecx
+    inc     eax
+    dec     edx
+    jne     .L1
+.L2:
     ret
 .L3:
     add     ecx, 2
     movsx   rax, ecx
     mov     BYTE[rdi+rax], 0xa; '\n'
-    xor     eax, eax
-    jmp     .L2
+    mov     eax, 0
+    jmp     .L0
 
 
 
@@ -29,26 +29,30 @@ print_screen:
     add     rdi, m_screen_size * 4
     mov     ecx, 1
     mov     edx, 0
-.L10:
+
+.L0:
     cmp     DWORD[rax], 0
-    jne     .L7
+    jne     .L1
     movsx   r8, edx
     mov     BYTE[rsi+r8], 0x20 ; ' '
-    jmp     .L8
-.L7:
+    jmp     .L2
+
+.L1:
     movsx   r8, edx
     mov     BYTE[rsi+r8], 0xb1 ; '▒'
-.L8:
+
+.L2:
     cmp     ecx, m_screen_w
-    jne     .L9
-    add     edx, 1
+    jne     .L3
+    inc     edx
     mov     ecx, 0
-.L9:
-    add     edx, 1
-    add     ecx, 1
+
+.L3:
+    inc     edx
+    inc     ecx
     add     rax, 4
     cmp     rax, rdi
-    jne     .L10
+    jne     .L0
     
     mov eax, sys_write
     mov edi, 1

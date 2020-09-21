@@ -23,6 +23,7 @@ O_SYNC        equ 0x101000
 O_TRUNC       equ 0x200
 O_WRONLY      equ 0x1
 
+SYS_EXIT    equ	60
 SYS_READ	equ	0
 SYS_WRITE	equ	1
 SYS_OPEN	equ	2

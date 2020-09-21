@@ -1,30 +1,5 @@
 
-%if 0
-
-https://stackoverflow.com/questions/10156409/convert-hex-string-char-to-int
-
-/**
- * hex2int
- * take a hex string and convert it to a 32bit number (max 8 hex digits)
- */
-uint32_t hex2int(const char *str) 
-{
-    uint32_t res = 0;
-    uint8_t c;
-
-    while ((c = *str++)) {
-        if (c >= '0' && c <= '9') c = c - '0';
-        else if (c >= 'a' && c <='f') c = c - 'a' + 10;
-        else if (c >= 'A' && c <='F') c = c - 'A' + 10;
-
-        res = (res << 4) | (c & 0xF);
-    }
-
-    return res;
-}
-
-
-%endif
+; https://stackoverflow.com/questions/10156409/convert-hex-string-char-to-int
 
 
 global hex2int

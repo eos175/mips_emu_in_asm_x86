@@ -9,7 +9,7 @@ typedef struct {
 } instruction_t;
 
 
-int get_instruction(void *inst, char *buf, int pc)
+int dump_instruction(void *inst, char *buf, int pc)
 {
     instruction_t d = *(instruction_t *)inst;
     
