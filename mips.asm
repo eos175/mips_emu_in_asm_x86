@@ -1,7 +1,7 @@
  
 
-%define get_register(i ,r)      mov r, [m_res + i*4]
-%define set_register(i, r)      mov [m_res + i*4], r
+%define get_register(i ,r)      mov r, DWORD[m_res + i*4]
+%define set_register(i, r)      mov DWORD[m_res + i*4], r
 
 
 %define check_func(code, label)    __check_op code, label

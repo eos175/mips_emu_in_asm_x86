@@ -1,15 +1,12 @@
 SYS_EXIT    equ	60
 
-extern print_hex
-extern print_int
-extern print_inst
-extern print_reg
-extern print_screen
-extern get_instruction ; tmp para llevar un registro
-
 
 %define PRINT_SCREEN      1
 %define DEBUG             0
+
+
+; debe ser 1000000 pero en algunos juego va lento
+%define MILLIS2NANO       800000
 
 
 %include "utils.asm"
@@ -17,6 +14,7 @@ extern get_instruction ; tmp para llevar un registro
 %include "instruction.asm"
 %include "read_file.asm"
 %include "write_file.asm"
+%include "screen.asm"
 
 
 global _start
@@ -30,7 +28,7 @@ section .data
     ; 64x64
     m_screen_w      equ 64
     m_screen_h      equ 64
-    m_screen_size   dd  m_screen_w * m_screen_h
+    m_screen_size   equ m_screen_w * m_screen_h
 
     ; m_pc            dd 0x00400000
 
@@ -39,7 +37,7 @@ section .bss
     input_char RESB 1
 
 
-    logger      RESB 16 * 8 * 1024
+    logger      RESB 8 * 1024
         .len    RESD 1
     
 
@@ -51,8 +49,8 @@ section .bss
     m_res        RESD 32
     m_stack      RESD 1024
 
-    ;m_screen_p     RESB m_screen_w * m_screen_h ; proxy a la pantalla real
-    m_screen     RESD m_screen_w * m_screen_h
+    m_screen_p   RESB m_screen_size + (m_screen_h * 1) ; proxy a la pantalla real
+    m_screen     RESD m_screen_size
 
     m_inst resb instruction_t_size
 
@@ -113,10 +111,10 @@ _start:
     ; https://superuser.com/questions/380059/display-characters-on-a-square-grid
     ; https://stackoverflow.com/questions/5584806/extended-ascii-in-linux
     ; lleno la pantalla de espacios
-    mov eax, [m_screen_size]
+    mov eax, m_screen_size
 _L00:
     dec eax
-    mov [m_screen + eax * 4], DWORD 0 ;0xb1b1b1b1; 0x20202020 ; b' ' * 4
+    mov DWORD[m_screen + eax * 4], 0 ;0xb1b1b1b1; 0x20202020 ; b' ' * 4
     jne _L00
 
 
@@ -125,24 +123,27 @@ _L00:
     ; para limpiar la pantalla
     call canonical_off
     print clear, clear_length	; limpia la pantalla
+
+    mov rdi, m_screen_p
+    call init_screen
 %endif
 
 
-    set_register(28, DWORD 0x10008000); $gp = 28
-    set_register(29, DWORD 0x7fffeffc); $sp = 29
+    set_register(28, 0x10008000); $gp = 28
+    set_register(29, 0x7fffeffc); $sp = 29
 
 _L1:
     mov eax, [c_clock]
     inc eax
     mov [c_clock], eax
-    cmp eax, DWORD 600 ; cada 100 instrucciones, añade al registro
+    cmp eax, DWORD 100 ; cada 100 instrucciones, añade al registro
     jne _no_save_file
 
     ; guardo en el log
     mov rdi, filename_log
     mov rsi, logger
     mov edx, [logger.len]
-    ;call write_file
+    call write_file
 
     mov [logger.len], DWORD 0
     mov [c_clock], DWORD 0
@@ -150,14 +151,13 @@ _L1:
 %if PRINT_SCREEN
     ; pinta la pantalla
 
+    print clear, clear_length
+
     mov rdi, m_screen
+    mov rsi, m_screen_p
     call print_screen
 
     getchar
-
-    ;unsetnonblocking
-    sleeptime
-    print clear, clear_length
 
 %endif
 
@@ -180,14 +180,17 @@ _C1:
 
     mov edx, [m_pc]
     mov edi, [m_text + edx]
-
     mov rsi, m_inst
+    call get_instruction
+
+
+
+    mov rdi, m_inst
 
     mov eax, [logger.len]
-    mov rdx, logger
-    add rdx, rax
-    mov ecx, [m_pc]
-    call get_instruction
+    mov rsi, logger
+    add rsi, rax
+    mov edx, [m_pc]
 
     mov ebx, [logger.len]
     add eax, ebx
@@ -280,8 +283,9 @@ __randint:
     jmp _ET
 
 __sleep_ms:
-    ; sleep_ms($a0)
-
+    imul eax, ebx, MILLIS2NANO
+    mov QWORD[tv_nsec], rax
+    sleeptime
     jmp _ET
 
 __exit:
@@ -422,10 +426,10 @@ __slt:
     get_rd(ecx)
     cmp eax, ebx
     jl .L0
-    set_register(ecx, DWORD 0)
+    set_register(ecx, 0)
     jmp _ET
 .L0:
-    set_register(ecx, DWORD 1)
+    set_register(ecx, 1)
     jmp _ET
 
 
@@ -446,10 +450,10 @@ __slti:
     get_rt(ecx)
     cmp ebx, eax
     jl .L0
-    set_register(ecx, DWORD 0)
+    set_register(ecx, 0)
     jmp _ET
 .L0:
-    set_register(ecx, DWORD 1)
+    set_register(ecx, 1)
     jmp _ET
 
 
@@ -552,13 +556,11 @@ __lw:
     get_imm(ecx)
     add ebx, ecx
 
-
     cmp ebx, 0xffff0000 ; teclado
     je __lw_key_recv_ctrl
 
     cmp ebx, 0xffff0004 ; teclado
     je __lw_keyboard
-
 
     cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
     jl __lw_screen
@@ -666,11 +668,11 @@ __sw_screen:
 
 %if 0
 __white:
-    mov [m_screen + ebx], BYTE 0xb1 ; '▒'
+    mov BYTE[m_screen + ebx], 0xb1 ; '▒'
     jmp _ET
 
 __black:
-    mov [m_screen + ebx], BYTE 0x20 ; ' '
+    mov BYTE[m_screen + ebx], 0x20 ; ' '
     jmp _ET
 %endif
 

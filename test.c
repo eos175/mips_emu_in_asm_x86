@@ -50,7 +50,6 @@ void print_screen(void *d)
     }
     
 }
-*/
 
 
 void print_screen(void *d)
@@ -64,6 +63,8 @@ void print_screen(void *d)
     }
     
 }
+*/
+
 
 void print_reg(void *arr)
 {
