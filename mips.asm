@@ -79,6 +79,7 @@
 
 
 __sys:
+
     get_register(2, eax) ; $v0 -> para saber que syscall es
     get_register(4, ebx) ; $a0 -> 1er parametro
     get_register(5, ecx) ; $a1 -> 1er parametro
@@ -89,8 +90,13 @@ __sys:
     cmp eax, DWORD 32 ; sleep 
     je __sleep_ms
 
+    cmp eax, DWORD 56 ; message dialog int
+    je __message_int
+
     cmp eax, DWORD 10 ; exit 
     je __exit
+
+
 
 __e:
     jmp _ET
@@ -112,6 +118,43 @@ __sleep_ms:
     mov QWORD[tv_nsec], rax
     sleeptime
     jmp _ET
+
+__message_int:
+    
+    sub ebx, 0x10010000
+    mov eax, [m_data + ebx] ;db $a0
+
+    call __print
+
+
+    jmp _ET
+
+
+__print:
+
+    push rax
+    mov rbx, 0
+
+__printLoop:
+    
+    
+
+    inc eax
+    inc rbx
+    mov cl, [eax]
+    cmp cl, 0
+    jne __printLoop
+
+    
+
+    mov rax, 1
+    mov rdi, 1
+    pop rax
+    mov rdx, rbx
+    syscall
+
+    ret
+
 
 __exit:
     jmp exit
@@ -371,6 +414,7 @@ __lui: ; rt = imm << 16
 
 
 __lw:
+
     get_rs(ebx)
     get_register(ebx, ebx)
 
@@ -393,6 +437,7 @@ __lw:
 
 
 ; TODO(eos175) falta probar bien
+
 __lw_stack:
     not ebx
     add ebx, 0x7fffeffc
@@ -435,7 +480,9 @@ __lw_data:
     sub ebx, 0x10010000
     mov ecx, [m_data + ebx]
     get_rt(eax)
+
     set_register(eax, ecx)
+    
     jmp _ET
 
 

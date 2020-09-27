@@ -19,7 +19,7 @@ section .data
     ;Este comando es para limpiar la pantalla, no es intuitivo usenlo como tal
     clear:		db 27, "[2J", 27, "[H"
     clear_length:	equ $-clear
-        
+    saltoLinea: db 0xa    
 
     ; Esto se requiere para que la termina no se bloquee usar tal cual
     termios:        times 36 db 0
@@ -41,6 +41,7 @@ tv_nsec dq 80000000 ;200 000 000
 section .bss
 
     input_char RESB 1
+
 
 section .text
 
@@ -73,6 +74,24 @@ section .text
 	syscall
 %endmacro
 
+
+
+
+%macro printX 2
+    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
+    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
+    mov esi, %1 ;Aca va el mensaje
+    mov edx, %2 ;Aca el largo del mensaje
+    syscall
+%endmacro
+
+%macro newLine 0
+    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
+    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
+    mov esi, saltoLinea ;Aca va el mensaje
+    mov edx, 1 ;Aca el largo del mensaje
+    syscall
+%endmacro
 
 ;Usenlo tal cual está acá
 %macro getchar 0
