@@ -1,6 +1,5 @@
 extern dump_instruction
 
-
 %define PRINT_SCREEN      1
 %define DEBUG             0
 
@@ -24,13 +23,13 @@ section .data
     c_clock         dd 0
 
     filename_log    db "mips_instruction.log", 0
-    y_n_c             db " [y = Yes / n = No / c = Cancel]", 0
+    question        db " [y = Yes / n = No / c = Cancel]", 0
+    .len equ $-question
     sound           db 0x7, 0
     ; 64x64
     m_screen_w      equ 64
     m_screen_h      equ 64
     m_screen_size   equ m_screen_w * m_screen_h
-    ;codes: db '0123456789'
     ; m_pc            dd 0x00400000
 
 section .bss
@@ -44,7 +43,7 @@ section .bss
     m_data       RESD 1024 * 256 ; 1MB -> 262144 lineas
     m_text       RESD 1024 * 256
 
-    m_res        RESD 32
+    m_reg        RESD 32
     m_stack      RESD 1024
 
     m_screen_p   RESB m_screen_size + m_screen_h  ; proxy a la pantalla real
@@ -52,8 +51,7 @@ section .bss
 
     m_inst       RESB instruction_t_size
 
-    d_Space      RESB 100
-    d_Space_Pos  RESB 8    
+    
 
 section .text
 
@@ -91,7 +89,7 @@ _L1:
     mov eax, [c_clock]
     inc eax
     mov [c_clock], eax
-    cmp eax, DWORD 100 ; cada 100 instrucciones, añade al registro
+    cmp eax, DWORD 80 ; cada 100 instrucciones, añade al registro
     jne _no_save_file
 
 %if DEBUG
@@ -157,7 +155,6 @@ _C1:
 
     check_op(_j_j, __j)
     check_op(_jal_j, __jal)
-
     check_op(_lui_i, __lui)
     check_op(_lw_i, __lw)
     check_op(_sw_i, __sw)
@@ -171,6 +168,8 @@ _C1:
     check_op(_beq_i, __beq)
     check_op(_bne_i, __bne)
 
+
+
 __type_r:
 
     mov al, BYTE[m_inst + instruction_t.func]
@@ -179,7 +178,7 @@ __type_r:
 
     check_func(_jr_r, __jr)
     check_func(_xor_r, __xor) ; TODO(eos175) falta agregar los demas bitwise
-    ;check_func(_and_r, __and)
+    check_func(_and_r, __and)
     check_func(_add_r, __add)
     check_func(_addu_r, __add)
     check_func(_sub_r, __sub)
@@ -188,7 +187,10 @@ __type_r:
     check_func(_slt_r, __slt)
     check_func(_srl_r, __srl)
     check_func(_sll_r, __sll)
-
+    check_func(_nor_r, __nor)
+    check_func(_or_r, __or)
+    check_func(_sltu_r, __slt)
+    check_func(_subu_r, __sub)
 
 
 _ET:
@@ -197,8 +199,8 @@ _ET:
     mov [m_pc], edx
 
 
-%if (DEBUG > 3 && 0)
-    mov rdi, m_res
+%if (DEBUG > 3 && 1)
+    mov rdi, m_reg
     call print_reg
 %endif
 

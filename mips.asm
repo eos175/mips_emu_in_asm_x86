@@ -1,5 +1,5 @@
-%define get_register(i ,r)      mov r, DWORD[m_res + i*4]
-%define set_register(i, r)      mov DWORD[m_res + i*4], r
+%define get_register(i ,r)      mov r, DWORD[m_reg + i*4]
+%define set_register(i, r)      mov DWORD[m_reg + i*4], r
 
 
 %define check_func(code, label)    __check_op code, label
@@ -7,6 +7,12 @@
 %define check_op(code, label)   __check_op code, label
 %macro __check_op 2
     cmp al, %1
+    je %2
+%endmacro
+
+%define sys_call(v0, v0_label)   __sys_call v0, v0_label
+%macro __sys_call 2
+    cmp eax, DWORD %1
     je %2
 %endmacro
 
@@ -81,24 +87,12 @@ __sys:
     get_register(4, ebx) ; $a0 -> 1er parametro
     get_register(5, ecx) ; $a1 -> 2do parametro
 
-    cmp eax, DWORD 42 ; random 
-    je __randint
-
-    cmp eax, DWORD 32 ; sleep 
-    je __sleep_ms
-
-    cmp eax, DWORD 31 ; beep sound
-    je __sound_sys
-
-    cmp eax, DWORD 50 ; message yes or no
-    je __msg_Y_or_N
-
-    cmp eax, DWORD 56 ; message dialog int
-    je __message_int
-
-    cmp eax, DWORD 10 ; exit 
-    je __exit
-
+    sys_call(42, __randint)         ;   random value
+    sys_call(32, __sleep_ms)        ;   sleep
+    sys_call(31, __sound_sys)       ;   beep sound  
+    sys_call(50, __msg_Y_or_N)      ;   conditional dialog
+    sys_call(56, __message_int)     ;   print a Text & a Int value
+    sys_call(10, __exit)            ;   exit
 
 
 __e:
@@ -132,6 +126,8 @@ __sound_sys:
     jmp _ET
 
 __msg_Y_or_N:
+    
+    mov QWORD[tv_nsec], 80000000
 
     sub ebx, 0x10010000
     mov ecx, m_data 
@@ -149,15 +145,12 @@ __msg_Y_or_N:
     mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
     syscall
 
-    print y_n_c, 32
+    print question, question.len
 
 .msg_Y_or_N_loop:
     
     
     getchar
-
-    cmp rax, 1
-    jne .done_msg
 
     mov al,[input_char]
     cmp al, 'y'
@@ -169,30 +162,19 @@ __msg_Y_or_N:
     cmp al, 'c'
     je .case_c
 
-
-.done_msg:  
-
-    call canonical_off
-
-    mov rdi, m_screen_p
-    call init_screen
-    mov QWORD[tv_nsec], 80000000
     sleeptime
     jmp .msg_Y_or_N_loop
-    
+
 .case_y:
-    mov edx, 0
-    set_register(4, edx)
+    set_register(4, 0)
     jmp _ET
 
 .case_n:
-    mov edx, 1
-    set_register(4, edx)
+    set_register(4, 1)
     jmp _ET
 
 .case_c:
-    mov edx, 2
-    set_register(4, edx)
+    set_register(4, 2)
     jmp _ET
 
 __message_int:
@@ -208,6 +190,8 @@ __message_int:
 
     mov edi, ecx
     call get_null_char
+
+    ;print 
 
     ;Aqui imprimos la cadena
     mov esi, ecx
@@ -347,8 +331,40 @@ __xor:
     set_register(ebx, eax)
     jmp _ET
 
+__and:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    and eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+__nor:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    or eax, ebx
+    not eax
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
+
+__or:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    or eax, ebx
+    get_rd(ebx)
+    set_register(ebx, eax)
+    jmp _ET
 
 
+
+    
 %if 0
 
 if rs < rt
@@ -503,7 +519,7 @@ __lw:
     cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
     jl __lw_screen
 
-    cmp ebx, 0x20040000 ; $data [0x10010000 .. 0x10040000]
+    cmp ebx, 0x10040000 ; $data [0x10010000 .. 0x10040000]
     jl __lw_data
 
     jmp __lw_stack
@@ -578,7 +594,7 @@ __sw:
     cmp ebx, 0x10010000 ; $gp [0x10008000 .. 0x10010000]
     jl __sw_screen
 
-    cmp ebx, 0x20040000 ; $gp [0x10010000 .. 0x10040000]
+    cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
     jl __sw_data
 
     jmp __sw_stack

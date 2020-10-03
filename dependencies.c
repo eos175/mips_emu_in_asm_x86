@@ -29,8 +29,8 @@ int dump_instruction(void *inst, char *buf, int pc)
 
 
 
+
 /*
-//void printInt(char *text)
 void printInt(char *text)
 {
 
@@ -44,14 +44,6 @@ void printInt(char *text)
     printf("\n\n");
 }
 */
-/*
-int main(int argc, char const *argv[])
-{
-    Console.Beep(1,100);
-    return 0;
-}
-*/
-
 
 /*
 

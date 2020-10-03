@@ -40,6 +40,8 @@ tv_nsec dq 80000000 ;200 000 000
 section .bss
 
     input_char    RESB 1
+    d_Space       RESB 100
+    d_Space_Pos   RESB 8    
     
 
 section .text
