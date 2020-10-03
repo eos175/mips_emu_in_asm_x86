@@ -6,7 +6,7 @@ extern dump_instruction
 
 
 ; debe ser 1000000 pero en algunos juego va lento
-%define MILLIS2NANO       1000000
+%define MILLIS2NANO       1200000
 
 
 %include "utils.asm"
@@ -24,18 +24,16 @@ section .data
     c_clock         dd 0
 
     filename_log    db "mips_instruction.log", 0
-
+    y_n_c             db " [y = Yes / n = No / c = Cancel]", 0
+    sound           db 0x7, 0
     ; 64x64
     m_screen_w      equ 64
     m_screen_h      equ 64
     m_screen_size   equ m_screen_w * m_screen_h
-
+    ;codes: db '0123456789'
     ; m_pc            dd 0x00400000
 
 section .bss
-
-    input_char RESB 1
-
 
     logger      RESB 2 * 8 * 1024
         .len    RESD 1
@@ -49,10 +47,13 @@ section .bss
     m_res        RESD 32
     m_stack      RESD 1024
 
-    m_screen_p   RESB m_screen_size + (m_screen_h * 1) ; proxy a la pantalla real
+    m_screen_p   RESB m_screen_size + m_screen_h  ; proxy a la pantalla real
     m_screen     RESD m_screen_size
 
-    m_inst resb instruction_t_size
+    m_inst       RESB instruction_t_size
+
+    d_Space      RESB 100
+    d_Space_Pos  RESB 8    
 
 section .text
 
@@ -78,7 +79,6 @@ _start:
 %if PRINT_SCREEN
     ; para limpiar la pantalla
     call canonical_off
-    print clear, clear_length	; limpia la pantalla
 
     mov rdi, m_screen_p
     call init_screen
@@ -94,11 +94,14 @@ _L1:
     cmp eax, DWORD 100 ; cada 100 instrucciones, añade al registro
     jne _no_save_file
 
+%if DEBUG
     ; guardo en el log
     mov rdi, filename_log
     mov rsi, logger
     mov edx, [logger.len]
     call write_file
+    
+%endif
 
     mov [logger.len], DWORD 0
     mov [c_clock], DWORD 0
@@ -176,6 +179,7 @@ __type_r:
 
     check_func(_jr_r, __jr)
     check_func(_xor_r, __xor) ; TODO(eos175) falta agregar los demas bitwise
+    ;check_func(_and_r, __and)
     check_func(_add_r, __add)
     check_func(_addu_r, __add)
     check_func(_sub_r, __sub)

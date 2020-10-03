@@ -1,4 +1,3 @@
- 
 %define get_register(i ,r)      mov r, DWORD[m_res + i*4]
 %define set_register(i, r)      mov DWORD[m_res + i*4], r
 
@@ -76,19 +75,23 @@
 %define _jal_j		0x03
 
 
-
-
 __sys:
 
     get_register(2, eax) ; $v0 -> para saber que syscall es
     get_register(4, ebx) ; $a0 -> 1er parametro
-    get_register(5, ecx) ; $a1 -> 1er parametro
+    get_register(5, ecx) ; $a1 -> 2do parametro
 
     cmp eax, DWORD 42 ; random 
     je __randint
 
     cmp eax, DWORD 32 ; sleep 
     je __sleep_ms
+
+    cmp eax, DWORD 31 ; beep sound
+    je __sound_sys
+
+    cmp eax, DWORD 50 ; message yes or no
+    je __msg_Y_or_N
 
     cmp eax, DWORD 56 ; message dialog int
     je __message_int
@@ -103,7 +106,7 @@ __e:
 
 
 __randint:
-    ; para no usar el random de c voy a usar el clock virtual como generador seudoaleatorio
+    ; para no usar el random de c voy a usar el clock virtual como generador pseudo-aleatorio
     ; rand() % n
     ; https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly/8232170
     
@@ -119,41 +122,111 @@ __sleep_ms:
     sleeptime
     jmp _ET
 
-__message_int:
-    
-    sub ebx, 0x10010000
-    mov eax, [m_data + ebx] ;db $a0
-
-    call __print
-
+__sound_sys:
+    mov esi, sound
+    mov edx, 2
+    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
+    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
+    syscall
 
     jmp _ET
 
+__msg_Y_or_N:
 
-__print:
+    sub ebx, 0x10010000
+    mov ecx, m_data 
+    add ecx, ebx
 
-    push rax
-    mov rbx, 0
+    mov edi, ecx
+    call get_null_char
 
-__printLoop:
-    
-    
+    ;aca tengo que hacer el loop para preguntar al usuario [y/n]
 
-    inc eax
-    inc rbx
-    mov cl, [eax]
-    cmp cl, 0
-    jne __printLoop
-
-    
-
-    mov rax, 1
-    mov rdi, 1
-    pop rax
-    mov rdx, rbx
+    ;Aqui imprimos la cadena
+    mov esi, ecx
+    mov edx, eax
+    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
+    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
     syscall
 
-    ret
+    print y_n_c, 32
+
+.msg_Y_or_N_loop:
+    
+    
+    getchar
+
+    cmp rax, 1
+    jne .done_msg
+
+    mov al,[input_char]
+    cmp al, 'y'
+    je .case_y
+
+    cmp al, 'n'
+    je .case_n
+
+    cmp al, 'c'
+    je .case_c
+
+
+.done_msg:  
+
+    call canonical_off
+
+    mov rdi, m_screen_p
+    call init_screen
+    mov QWORD[tv_nsec], 80000000
+    sleeptime
+    jmp .msg_Y_or_N_loop
+    
+.case_y:
+    mov edx, 0
+    set_register(4, edx)
+    jmp _ET
+
+.case_n:
+    mov edx, 1
+    set_register(4, edx)
+    jmp _ET
+
+.case_c:
+    mov edx, 2
+    set_register(4, edx)
+    jmp _ET
+
+__message_int:
+    
+    push rcx
+
+    newLine
+    newLine
+
+    sub ebx, 0x10010000
+    mov ecx, m_data 
+    add ecx, ebx
+
+    mov edi, ecx
+    call get_null_char
+
+    ;Aqui imprimos la cadena
+    mov esi, ecx
+    mov edx, eax
+    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
+    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
+    syscall
+
+
+    pop rcx
+    mov rax, rcx
+
+    call _print_Int
+
+    newLine
+    newLine
+
+    jmp _ET
+
 
 
 __exit:

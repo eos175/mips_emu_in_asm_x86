@@ -37,15 +37,13 @@ tv_sec  dq 0
 tv_nsec dq 80000000 ;200 000 000
 
 
-%if 0
 section .bss
 
-    input_char RESB 1
-
+    input_char    RESB 1
+    
 
 section .text
 
-%endif
 
 
 ; Este par que están tienen que ver con lo de consola y no bloquearla, uselos tal cual
@@ -75,15 +73,6 @@ section .text
 %endmacro
 
 
-
-
-%macro printX 2
-    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
-    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
-    mov esi, %1 ;Aca va el mensaje
-    mov edx, %2 ;Aca el largo del mensaje
-    syscall
-%endmacro
 
 %macro newLine 0
     mov eax, sys_write ; Aca le digo cual syscall quier aplicar
@@ -194,5 +183,59 @@ write_stdin_termios:
         pop rcx
         pop rbx
         pop rax
+        ret
+
+
+_print_Int:
+    mov rcx, d_Space
+    mov rbx, 10
+    mov [rcx], rbx
+    inc rcx 
+    mov [d_Space_Pos], rcx
+
+.print_Int_Loop:
+    mov rdx, 0
+    mov rbx, 10
+    div rbx
+    push rax
+    add rdx, 48
+
+    mov rcx, [d_Space_Pos]
+    mov [rcx], dl
+    inc rcx
+    mov [d_Space_Pos], rcx
+
+    pop rax
+    cmp rax, 0
+    jne .print_Int_Loop
+
+.print_Int_Loop2:
+    mov rcx, [d_Space_Pos]
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, rcx
+    mov rdx, 1
+    syscall
+
+    mov rcx, [d_Space_Pos]
+    dec rcx
+    mov [d_Space_Pos], rcx
+
+    cmp rcx, d_Space
+    jge .print_Int_Loop2
+
+    ret
+
+
+get_null_char:
+        mov     eax,  0
+.L1:
+        cmp     BYTE[rdi], 0
+        je      .L2
+        inc     rdi
+        inc     eax
+        jmp     .L1
+.L2:
         ret
 

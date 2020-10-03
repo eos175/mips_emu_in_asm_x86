@@ -28,23 +28,28 @@ int dump_instruction(void *inst, char *buf, int pc)
 }
 
 
+
 /*
-void printInt(char text)
+//void printInt(char *text)
+void printInt(char *text)
 {
-    int  longitud = 0;
-    char *p;
 
-    p = text;
-
-    while (*p != '\0') {
-        longitud++;
-        printf( "%c", *p ); 
+    char *p = text;
+   
+    while (*p) {
+        
+        printf("%c",*p); 
         p++;            
     }
-    
-
+    printf("\n\n");
 }
-
+*/
+/*
+int main(int argc, char const *argv[])
+{
+    Console.Beep(1,100);
+    return 0;
+}
 */
 
 

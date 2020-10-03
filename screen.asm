@@ -56,7 +56,7 @@ print_screen:
     
     mov eax, sys_write
     mov edi, 1
-    mov edx, m_screen_size + (m_screen_h * 1)
+    mov edx, m_screen_size + m_screen_h 
     syscall
 
     ret
