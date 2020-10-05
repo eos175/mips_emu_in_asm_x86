@@ -104,10 +104,9 @@ __randint:
     ; rand() % n
     ; https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly/8232170
     
-    mov eax, [c_clock]
-    cqd
-    idiv ecx
-    set_register(4, edx) ; $a0
+    mov rdi, rbx
+    call randint
+    set_register(4, eax) ; $a0
     jmp _ET
 
 __sleep_ms:

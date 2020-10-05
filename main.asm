@@ -13,6 +13,7 @@ extern dump_instruction
 %include "instruction.asm"
 %include "load_file.asm"
 %include "write_file.asm"
+%include "random.asm"
 %include "screen.asm"
 
 
@@ -84,6 +85,8 @@ _start:
 
     set_register(28, 0x10008000); $gp = 28
     set_register(29, 0x7fffeffc); $sp = 29
+
+    ;call init_random
 
 _L1:
     mov eax, [c_clock]
