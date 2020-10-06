@@ -32,7 +32,7 @@ section .data
     
     ; 64x64
     m_screen_w      equ 64
-    m_screen_h      equ 32
+    m_screen_h      equ 64
     m_screen_size   equ m_screen_w * m_screen_h
 
     file_urandom    db "/dev/urandom", 0
