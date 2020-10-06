@@ -23,31 +23,31 @@ sudo apt-get install -y nasm
 
 To do this, you must first double click on
 
-![Square.ttf](res/screen_0.png)
+![](res/screen_0.png)
 
 And then click install
 
-![Square.ttf](res/screen_1.png)
+![](res/screen_1.png)
 
 
 Now you must change the font type of the terminal in preferences
 
-![Square.ttf](res/screen_2.png)
+![](res/screen_2.png)
 
 
 Create a new profile for the new font
 
-![Square.ttf](res/screen_3.png)
+![](res/screen_3.png)
 
 
 Change in Custom font to Square modern size 6
 
-![Square.ttf](res/screen_4.png)
+![](res/screen_4.png)
 
 
-In compatibility change to IBM855 this is for extended ASCII characters
+In compatibility change to IBM855 this is for extended ASCII characters ('▒')
 
-![Square.ttf](res/screen_5.png)
+![](res/screen_5.png)
 
 
 And that would be it, you already have the terminal configured properly
@@ -60,14 +60,14 @@ make build
 
 ## Change the Command Line Arguments
 
-### [Pong](https://github.com/AndrewHamm/MIPS-Pong)
+### pong
 
 ```shell
 ./mips_emu.app ejemplos/pong.text.hex ejemplos/pong.data.hex
 ```
 ![pong](res/video_1.gif)
 
-### [Snake](https://github.com/Misto423/Assembly-Snake)
+### snake
 
 ```shell
 ./mips_emu.app ejemplos/snake.text.hex ejemplos/snake.data.hex
@@ -76,6 +76,7 @@ make build
 
 
 You can turn on debugging, so you can see in a file each decoded instruction only by changing DEBUG to 1
+
 
 
 ## ToDo
@@ -94,6 +95,11 @@ You can turn on debugging, so you can see in a file each decoded instruction onl
 ## References
 
 All suggestions and criticism are welcome
+
+
+[Misto423 - Assembly-Snake](https://github.com/Misto423/Assembly-Snake)
+
+[AndrewHamm - MIPS-Pong](https://github.com/AndrewHamm/MIPS-Pong)
 
 [Netwide Assembler - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 
