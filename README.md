@@ -101,8 +101,6 @@ All suggestions and criticism are welcome
 
 [AndrewHamm - MIPS-Pong](https://github.com/AndrewHamm/MIPS-Pong)
 
-[Misto423 - Assembly-Snake](https://github.com/Misto423/Assembly-Snake)
-
 [Netwide Assembler - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 
 [x86_64 Linux Assembly #1 - "Hello, World!"](https://www.youtube.com/watch?v=VQAKkuLL31g)
