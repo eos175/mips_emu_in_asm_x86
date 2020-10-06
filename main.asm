@@ -48,8 +48,8 @@ section .bss
 
     m_pc         RESD 1 ; 0x00400000
 
-    m_data       RESD 1024 * 256 ; 1MB -> 262144 lineas
-    m_text       RESD 1024 * 256
+    m_data       RESD 1024 * 64 ; 1MB -> 262144 lineas
+    m_text       RESD 1024 * 64
 
     m_reg        RESD 32
     m_stack      RESD 1024
