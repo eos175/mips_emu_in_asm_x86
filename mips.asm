@@ -99,14 +99,11 @@ __e:
     jmp _ET
 
 
-__randint:
-    ; para no usar el random de c voy a usar el clock virtual como generador pseudo-aleatorio
-    ; rand() % n
-    ; https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly/8232170
-    
-    mov rdi, rbx
+__randint:    
+    mov edi, ecx
     call randint
     set_register(4, eax) ; $a0
+
     jmp _ET
 
 __sleep_ms:

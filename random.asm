@@ -1,22 +1,16 @@
 
 %if 0
 
+generador pseudo aleatorio, se inicializa con una
+semilla aleatoria generada por urandom  
+
 https://stackoverflow.com/questions/32225896/pseudo-random-function-in-c
+https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly/8232170
 
 
 randint(10) -> 0 ... 9
 
-
 %endif
-
-
-section .data
-    file_urandom db "/dev/urandom", 0
-
-section .bss
-    next RESQ 16 ; 16 * 8 = 128
-
-section .text
 
 
 init_random:
@@ -31,7 +25,7 @@ init_random:
 
     mov rdi, rax
     mov rax, SYS_READ
-    mov rsi, next
+    mov rsi, next_s
     mov rdx, 128
     syscall
 
@@ -44,10 +38,10 @@ init_random:
 
 
 randint:
-    imul    rax, QWORD[next], 0x41c64e6b
+    imul    rax, QWORD[next_s], 0x41c64e6b
     xor     edx, edx
     add     rax, 12345
-    mov     QWORD[next], rax
+    mov     QWORD[next_s], rax
     shr     rax, 16
     and     eax, 0x7fff
     div     edi

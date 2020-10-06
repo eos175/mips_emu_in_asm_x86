@@ -12,8 +12,8 @@ extern dump_instruction
 %include "mips.asm"
 %include "instruction.asm"
 %include "load_file.asm"
-%include "write_file.asm"
 %include "random.asm"
+%include "write_file.asm"
 %include "screen.asm"
 
 
@@ -24,16 +24,23 @@ section .data
     c_clock         dd 0
 
     filename_log    db "mips_instruction.log", 0
+    
     question        db " [y = Yes / n = No / c = Cancel]", 0
-    .len equ $-question
+        .len equ $-question
+    
     sound           db 0x7, 0
+    
     ; 64x64
     m_screen_w      equ 64
     m_screen_h      equ 64
     m_screen_size   equ m_screen_w * m_screen_h
     ; m_pc            dd 0x00400000
 
+    file_urandom    db "/dev/urandom", 0
+
 section .bss
+
+    next_s      RESQ 16 ; 16 * 8 = 128 -> TODO(eos175) para el random
 
     logger      RESB 2 * 8 * 1024
         .len    RESD 1
@@ -74,6 +81,8 @@ _start:
     mov rsi, m_data
     call load_file
 
+    call init_random
+
 
 %if PRINT_SCREEN
     ; para limpiar la pantalla
@@ -85,8 +94,6 @@ _start:
 
     set_register(28, 0x10008000); $gp = 28
     set_register(29, 0x7fffeffc); $sp = 29
-
-    ;call init_random
 
 _L1:
     mov eax, [c_clock]

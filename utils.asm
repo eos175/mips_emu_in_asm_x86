@@ -231,13 +231,13 @@ _print_Int:
 
 
 get_null_char:
-        mov     eax,  0
+    mov     eax,  0
 .L1:
-        cmp     BYTE[rdi], 0
-        je      .L2
-        inc     rdi
-        inc     eax
-        jmp     .L1
+    cmp     BYTE[rdi], 0
+    je      .L2
+    inc     rdi
+    inc     eax
+    jmp     .L1
 .L2:
-        ret
+    ret
 

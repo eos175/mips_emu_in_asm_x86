@@ -28,23 +28,6 @@ int dump_instruction(void *inst, char *buf, int pc)
 }
 
 
-
-
-/*
-void printInt(char *text)
-{
-
-    char *p = text;
-   
-    while (*p) {
-        
-        printf("%c",*p); 
-        p++;            
-    }
-    printf("\n\n");
-}
-*/
-
 /*
 
 void print_reg(void *arr)

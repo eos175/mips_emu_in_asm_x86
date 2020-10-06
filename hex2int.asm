@@ -1,8 +1,4 @@
-
 ; https://stackoverflow.com/questions/10156409/convert-hex-string-char-to-int
-
-
-global hex2int
 
 
 hex2int:
