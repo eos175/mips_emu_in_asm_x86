@@ -6,8 +6,8 @@ build:
 
 
 debug:
-	#gdb --args ./mips_emu.app ejemplos/pong.text.hex ejemplos/pong.data.hex
-	gdb --args ./mips_emu.app ejemplos/snake.text.hex ejemplos/snake.data.hex
+	#gdb --args ./mips_emu.app examples/pong.text.hex examples/pong.data.hex
+	gdb --args ./mips_emu.app examples/snake.text.hex examples/snake.data.hex
 
 
 clear:

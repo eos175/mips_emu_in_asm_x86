@@ -122,6 +122,8 @@ __sound_sys:
     jmp _ET
 
 __msg_Y_or_N:
+
+    jmp .case_n 
     
     mov QWORD[tv_nsec], 80000000
 
