@@ -10,6 +10,39 @@ data output and input. All this is designed in asssembler for the x86 CPU archit
 sudo apt-get install -y nasm
 ```
 
+## You need to install special fonts for better visualization!
+
+
+To do this, you must first double click on
+
+![Square.ttf](res/screen_0.png)
+
+And then click install
+
+![Square.ttf](res/screen_1.png)
+
+
+Now you must change the font type of the terminal in preferences
+
+![Square.ttf](res/screen_2.png)
+
+
+Create a new profile for the new fonts
+
+![Square.ttf](res/screen_3.png)
+
+
+Change in Custom font to Square modern size 6
+
+![Square.ttf](res/screen_4.png)
+
+
+In compatibility change to IBM 855
+
+![Square.ttf](res/screen_5.png)
+
+
+And that would be it, you already have the terminal configured properly
 
 ## How do I compile the Emulator?
 
