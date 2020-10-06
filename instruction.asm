@@ -44,9 +44,6 @@ struc instruction_t
 endstruc
 
 
-
-global get_instruction
-
 get_instruction:
     ; op = t >> 26
     mov     eax, edi

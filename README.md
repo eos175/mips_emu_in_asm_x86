@@ -1,6 +1,6 @@
 #  Designed by :black_nib:
 
-[Emmanuel Ortiz](https://github.com/eos175)
+[@eos175](https://github.com/eos175)
 
 [Kevin Jiron](https://github.com/kjiron)
 
@@ -60,23 +60,22 @@ make build
 
 ## Change the Command Line Arguments
 
-### pong
+### [Pong](https://github.com/AndrewHamm/MIPS-Pong)
 
 ```shell
 ./mips_emu.app ejemplos/pong.text.hex ejemplos/pong.data.hex
 ```
-![pong](https://user-images.githubusercontent.com/68199556/95167002-18457680-076c-11eb-93cd-0e7d73cafae0.gif)
+![pong](res/video_1.gif)
 
-### snake
+### [Snake](https://github.com/Misto423/Assembly-Snake)
 
 ```shell
 ./mips_emu.app ejemplos/snake.text.hex ejemplos/snake.data.hex
 ```
-![snake](https://user-images.githubusercontent.com/68199556/95167040-2abfb000-076c-11eb-9951-308f44228cbf.gif)
+![snake](res/video_2.gif)
 
 
 You can turn on debugging, so you can see in a file each decoded instruction only by changing DEBUG to 1
-
 
 
 ## ToDo
@@ -95,11 +94,6 @@ You can turn on debugging, so you can see in a file each decoded instruction onl
 ## References
 
 All suggestions and criticism are welcome
-
-
-[Misto423 - Assembly-Snake](https://github.com/Misto423/Assembly-Snake)
-
-[AndrewHamm - MIPS-Pong](https://github.com/AndrewHamm/MIPS-Pong)
 
 [Netwide Assembler - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 

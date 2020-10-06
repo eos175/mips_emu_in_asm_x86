@@ -23,7 +23,6 @@ init_screen:
     jmp     .L0
 
 
-
 print_screen:
     mov     rax, rdi
     add     rdi, m_screen_size * 4

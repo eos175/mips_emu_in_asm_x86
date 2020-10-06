@@ -2,17 +2,13 @@
 %define set_register(i, r)      mov DWORD[m_reg + i*4], r
 
 
-%define check_func(code, label)    __check_op code, label
+%define sys_call(v0, label)   __check_op v0, label
 
+%define check_func(code, label)    __check_op code, label
 %define check_op(code, label)   __check_op code, label
+
 %macro __check_op 2
     cmp al, %1
-    je %2
-%endmacro
-
-%define sys_call(v0, v0_label)   __sys_call v0, v0_label
-%macro __sys_call 2
-    cmp eax, DWORD %1
     je %2
 %endmacro
 
@@ -26,10 +22,8 @@
 %define get_shamt(r)   movsx r, BYTE[m_inst + instruction_t.shamt]
 
 
-
 ;-------------------Format R [Funct]-------------------------------------;
 %define	_sys_s		0x0c ; TODO(eos175)     syscall
-
 
 %define	_add_r		0x20
 %define _addu_r		0x21
@@ -37,11 +31,6 @@
 %define _div_r		0x1A
 %define _divu_r		0x1B
 %define _jr_r		0x08
-%define	_mfhi_r		0x10
-%define _mthi_r		0x11
-%define _mflo_r		0x12
-%define _mtlo_r		0x13
-%define _mult_r		0x18
 %define _mul_r		0x02    ; TODO(eos175) op=0x1c
 %define _multu_r	0x19
 %define _nor_r		0x27
@@ -54,7 +43,6 @@
 %define _sra_r		0x03
 %define _sub_r		0x22
 %define _subu_r		0x23
-
 
 ;-------------------Format I [Opcode]------------------------------------;
 %define _addi_i		0x08
@@ -82,7 +70,6 @@
 
 
 __sys:
-
     get_register(2, eax) ; $v0 -> para saber que syscall es
     get_register(4, ebx) ; $a0 -> 1er parametro
     get_register(5, ecx) ; $a1 -> 2do parametro
@@ -94,16 +81,14 @@ __sys:
     sys_call(56, __message_int)     ;   print a Text & a Int value
     sys_call(10, __exit)            ;   exit
 
-
 __e:
     jmp _ET
 
 
-__randint:    
+__randint:
     mov edi, ecx
     call randint
     set_register(4, eax) ; $a0
-
     jmp _ET
 
 __sleep_ms:
@@ -118,65 +103,24 @@ __sound_sys:
     mov eax, sys_write ; Aca le digo cual syscall quier aplicar
     mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
     syscall
-
     jmp _ET
 
-__msg_Y_or_N:
-
-    jmp .case_n 
-    
-    mov QWORD[tv_nsec], 80000000
-
-    sub ebx, 0x10010000
-    mov ecx, m_data 
-    add ecx, ebx
-
-    mov edi, ecx
-    call get_null_char
-
-    ;aca tengo que hacer el loop para preguntar al usuario [y/n]
-
-    ;Aqui imprimos la cadena
-    mov esi, ecx
-    mov edx, eax
-    mov eax, sys_write ; Aca le digo cual syscall quier aplicar
-    mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
-    syscall
-
-    print question, question.len
-
-.msg_Y_or_N_loop:
-    
-    
-    getchar
-
-    mov al,[input_char]
-    cmp al, 'y'
-    je .case_y
-
-    cmp al, 'n'
-    je .case_n
-
-    cmp al, 'c'
-    je .case_c
-
-    sleeptime
-    jmp .msg_Y_or_N_loop
-
-.case_y:
-    set_register(4, 0)
-    jmp _ET
+__msg_Y_or_N: ; TODO(eos175) auto en [not]
 
 .case_n:
     set_register(4, 1)
+    jmp _ET
+
+.case_y:
+    set_register(4, 0)
     jmp _ET
 
 .case_c:
     set_register(4, 2)
     jmp _ET
 
+
 __message_int:
-    
     push rcx
 
     newLine
@@ -187,17 +131,14 @@ __message_int:
     add ecx, ebx
 
     mov edi, ecx
-    call get_null_char
+    call strlen
 
-    ;print 
-
-    ;Aqui imprimos la cadena
+    ; Aqui imprimos la cadena
     mov esi, ecx
     mov edx, eax
     mov eax, sys_write ; Aca le digo cual syscall quier aplicar
     mov edi, 1  ; stdout, Aca le digo a donde quiero escribir
     syscall
-
 
     pop rcx
     mov rax, rcx
@@ -209,12 +150,8 @@ __message_int:
 
     jmp _ET
 
-
-
 __exit:
     jmp exit
-
-
 
 
 __srl: ; rd = rt >> shamt
@@ -249,7 +186,6 @@ __sll: ; rd = rt << shamt
     jmp _ET
 
 
-
 __jal: ; $ra = PC + 4
     mov eax, [m_pc]
     add eax, 4
@@ -273,7 +209,6 @@ __jr: ; PC = rs
     jmp _L1
 
 
-
 __add:
     get_rs(eax)
     get_rt(ebx)
@@ -293,8 +228,6 @@ __sub: ; rd = rs - rt
     get_rd(ebx)
     set_register(ebx, eax)
     jmp _ET
-
-
 
 __mul: ; rd = rs * rt
     get_rs(eax)
@@ -339,17 +272,6 @@ __and:
     set_register(ebx, eax)
     jmp _ET
 
-__nor:
-    get_rs(eax)
-    get_rt(ebx)
-    get_register(eax, eax)
-    get_register(ebx, ebx)
-    or eax, ebx
-    not eax
-    get_rd(ebx)
-    set_register(ebx, eax)
-    jmp _ET
-
 __or:
     get_rs(eax)
     get_rt(ebx)
@@ -359,8 +281,6 @@ __or:
     get_rd(ebx)
     set_register(ebx, eax)
     jmp _ET
-
-
 
     
 %if 0
@@ -438,7 +358,6 @@ __ori:
     jmp _ET
 
 
-
 %if 0
 
 if rs == rt 
@@ -479,7 +398,6 @@ __blez: ; if rs <= 0 ...
     jle __advance_pc
     jmp _ET
 
-
 __advance_pc:
     mov ebx, [m_pc]
     add ebx, 0x00400000
@@ -491,7 +409,6 @@ __advance_pc:
     jmp _ET
 
 
-
 __lui: ; rt = imm << 16
     get_imm(ebx)
     shl ebx, 16
@@ -499,12 +416,9 @@ __lui: ; rt = imm << 16
     set_register(eax, ebx)
     jmp _ET
 
-
 __lw:
-
     get_rs(ebx)
     get_register(ebx, ebx)
-
     get_imm(ecx)
     add ebx, ecx
 
@@ -520,19 +434,13 @@ __lw:
     cmp ebx, 0x10040000 ; $data [0x10010000 .. 0x10040000]
     jl __lw_data
 
-    jmp __lw_stack
-
-
 ; TODO(eos175) falta probar bien
-
 __lw_stack:
     not ebx
-    add ebx, 0x7fffeffc
-    mov ecx, [m_stack + (4 * 512) +  ebx] ; para ponerlo en el limite
+    mov ecx, [m_stack + 4 * 512 + 0x7fffeffc +  ebx] ; para ponerlo en el limite
     get_rt(eax)
     set_register(eax, ecx)
     jmp _ET
-
 
 ; http://www.cs.uwm.edu/classes/cs315/Bacon/Lecture/HTML/ch14s03.html
 ; recv_ctrl -> se pone en 1 cuando se preciona una tecla
@@ -546,7 +454,6 @@ __lw_key_recv_ctrl:
     set_register(eax, ebx)
     jmp _ET
 
-
 __lw_keyboard:
     movsx ebx, BYTE[input_char]
     get_rt(eax)
@@ -554,10 +461,8 @@ __lw_keyboard:
     mov [input_char], BYTE 0 ; TODO(eos175) esto lo debe hacer el usuario -> sw $zero, 0xffff0004
     jmp _ET
 
-
 __lw_screen:
     sub ebx, 0x10008000
-    ;shr ebx, 2 ; / 4 ->  TODO(eos175)  4 -> 1 bytes
     mov ecx, [m_screen + ebx]
     get_rt(eax)
     set_register(eax, ecx)
@@ -567,11 +472,8 @@ __lw_data:
     sub ebx, 0x10010000
     mov ecx, [m_data + ebx]
     get_rt(eax)
-
     set_register(eax, ecx)
-    
     jmp _ET
-
 
 
 __sw:
@@ -579,7 +481,6 @@ __sw:
     get_rs(ebx)
     get_register(ebx, ebx)
     add ebx, eax
-
     get_rt(eax)
     get_register(eax, eax)
 
@@ -595,30 +496,22 @@ __sw:
     cmp ebx, 0x10040000 ; $gp [0x10010000 .. 0x10040000]
     jl __sw_data
 
-    jmp __sw_stack
-
+; TODO(eos175) falta probar
+__sw_stack:
+    not ebx
+    mov [m_stack + 4 * 512 + 0x7fffeffc + ebx], eax
+    jmp _ET
 
 __sw_keyboard:
     mov [input_char], al ; solo 1 byte
     jmp _ET
-
-
-; TODO(eos175) falta probar
-__sw_stack:
-    not ebx
-    add ebx, 0x7fffeffc
-    mov [m_stack + (4 * 512)+ ebx], eax
-    jmp _ET
-
 
 __sw_screen:
     sub ebx, 0x10008000
     mov [m_screen + ebx], eax
     jmp _ET
 
-
 __sw_data:
     sub ebx, 0x10010000
     mov [m_data + ebx], eax
     jmp _ET
-

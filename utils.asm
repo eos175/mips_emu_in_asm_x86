@@ -1,3 +1,39 @@
+; https://stackoverflow.com/questions/48541868/how-to-append-to-a-file-using-x86-64-linux-system-calls
+
+O_ACCMODE     equ 0x3
+O_APPEND      equ 0x400
+O_ASYNC       equ 0x2000
+O_CLOEXEC     equ 0x80000
+O_CREAT       equ 0x40
+O_DIRECT      equ 0x4000
+O_DIRECTORY   equ 0x10000
+O_DSYNC       equ 0x1000
+O_EXCL        equ 0x80
+O_FSYNC       equ 0x101000
+O_LARGEFILE   equ 0x0
+O_NDELAY      equ 0x800
+O_NOATIME     equ 0x40000
+O_NOCTTY      equ 0x100
+O_NOFOLLOW    equ 0x20000
+O_NONBLOCK    equ 0x800
+O_RDONLY      equ 0x0
+O_RDWR        equ 0x2
+O_RSYNC       equ 0x101000
+O_SYNC        equ 0x101000
+O_TRUNC       equ 0x200
+O_WRONLY      equ 0x1
+
+SYS_EXIT    equ	60
+SYS_READ	equ	0
+SYS_WRITE	equ	1
+SYS_OPEN	equ	2
+SYS_CLOSE	equ	3
+SYS_STAT	equ	4
+SYS_FSTAT	equ	5
+SYS_LSTAT	equ	6
+SYS_POLL	equ	7
+SYS_LSEEK	equ	8
+
 
 ; Leer de consola es a través de STDIN
 STDIN_FILENO: equ 0
@@ -13,8 +49,8 @@ sys_nanosleep:	equ 35
 sys_time:	equ 201
 sys_fcntl:	equ 72
 
-section .data
 
+section .data
 
     ;Este comando es para limpiar la pantalla, no es intuitivo usenlo como tal
     clear:		db 27, "[2J", 27, "[H"
@@ -230,12 +266,11 @@ _print_Int:
     ret
 
 
-get_null_char:
+strlen:
     mov     eax,  0
 .L1:
-    cmp     BYTE[rdi], 0
+    cmp     BYTE[rdi + rax], 0
     je      .L2
-    inc     rdi
     inc     eax
     jmp     .L1
 .L2:

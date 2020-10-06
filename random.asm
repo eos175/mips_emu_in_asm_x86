@@ -1,8 +1,7 @@
-
 %if 0
 
 generador pseudo aleatorio, se inicializa con una
-semilla aleatoria generada por urandom  
+semilla aleatoria generada por urandom
 
 https://stackoverflow.com/questions/32225896/pseudo-random-function-in-c
 https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly/8232170
@@ -47,4 +46,3 @@ randint:
     div     edi
     mov     eax, edx
     ret
-
