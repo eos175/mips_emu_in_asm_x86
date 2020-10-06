@@ -2,12 +2,12 @@
 
 [@eos175](https://github.com/eos175)
 
-[Kevin Jiron](https://github.com/kjiron)
+[@kjiron](https://github.com/kjiron)
 
 
 
 #  MIPS Emulator in Assembly x86
-The idea of ​​this project is to do something similar to what MARS2 does, to be able to interpret
+The idea of this project is to do something similar to what MARS2 does, to be able to interpret
 MIPS type instructions and use the linux terminal as a graphical environment to have
 data output and input. All this is designed in asssembler for the x86 CPU architecture 
 
@@ -65,14 +65,14 @@ make build
 ```shell
 ./mips_emu.app ejemplos/pong.text.hex ejemplos/pong.data.hex
 ```
-![pong](res/video_1.gif)
+![pong](res/video_2.gif)
 
 ### snake
 
 ```shell
 ./mips_emu.app ejemplos/snake.text.hex ejemplos/snake.data.hex
 ```
-![snake](res/video_2.gif)
+![snake](res/video_1.gif)
 
 
 You can turn on debugging, so you can see in a file each decoded instruction only by changing DEBUG to 1
@@ -100,6 +100,8 @@ All suggestions and criticism are welcome
 [Misto423 - Assembly-Snake](https://github.com/Misto423/Assembly-Snake)
 
 [AndrewHamm - MIPS-Pong](https://github.com/AndrewHamm/MIPS-Pong)
+
+[Square.ttf](http://strlen.com/square/)
 
 [Netwide Assembler - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 
