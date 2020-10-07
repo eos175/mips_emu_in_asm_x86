@@ -124,6 +124,8 @@ _no_save_file:
 
     mov edx, [m_pc]
     mov edi, [m_text + edx]
+    cmp edi, 0
+    je __nop
     mov rsi, m_inst
     call get_instruction
 
@@ -167,6 +169,8 @@ _C1:
     check_op(_beq_i, __beq)
     check_op(_bne_i, __bne)
 
+    check_func(_mul_r, __mul) ; TODO(eos175) la trato como tipo I, ver(mips.asm)
+
 __type_r:
     mov al, BYTE[m_inst + instruction_t.func]
 
@@ -179,19 +183,19 @@ __type_r:
     check_func(_add_r, __add)
     check_func(_addu_r, __add)
     check_func(_sub_r, __sub)
-    check_func(_mul_r, __mul)
     check_func(_div_r, __div)
     check_func(_slt_r, __slt)
     check_func(_srl_r, __srl)
-    check_func(_sll_r, __sll)
     check_func(_sltu_r, __slt)
     check_func(_subu_r, __sub)
 
-    check_func(_multu_r, __multu)
-    check_func(_mult_r, __multu)
-    check_func(_divu_r, __divu)
+    check_func(_multu_r, __mult)
+    check_func(_mult_r, __mult)
+    check_func(_divu_r, __div)
     check_func(_mflo_r, __mflo)
     check_func(_mfhi_r, __mfhi)
+
+    check_func(_sll_r, __sll)
 
 _ET:
     mov edx, [m_pc]

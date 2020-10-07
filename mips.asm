@@ -2,13 +2,6 @@
 %define set_register(i, r)      mov DWORD[m_reg + i*4], r
 
 
-%define get_low_register(i ,r)       mov r, DWORD[m_reg + i*4]
-%define get_high_register(i ,r)      mov r, DWORD[m_reg + i*4]
-%define set_low_register(i, r)       mov DWORD[m_reg + i*4], r
-%define set_high_register(i, r)      mov DWORD[m_reg + i*4], r
-
-
-
 %define sys_call(v0, label)   __check_op v0, label
 
 %define check_func(code, label)    __check_op code, label
@@ -38,7 +31,12 @@
 %define _div_r		0x1A
 %define _divu_r		0x1B
 %define _jr_r		0x08
-%define _mul_r		0x02    ; TODO(eos175) op=0x1c
+
+%define _mul_r		0x1c    ; TODO(eos175) op=0x1c func=0x02 --> voy a tratar esto como tipo I
+
+
+%define _mthi_r     0x11
+%define _mtlo_r     0x13
 
 %define _mfhi_r     0x10
 %define _mflo_r     0x12
@@ -252,6 +250,8 @@ __mul: ; rd = rs * rt
     set_register(ebx, eax)
     jmp _ET
 
+%if 0
+
 __div: ; rd = rs / rt
     ; https://stackoverflow.com/questions/45506439/division-of-two-numbers-in-nasm
     xor edx, edx
@@ -262,8 +262,9 @@ __div: ; rd = rs / rt
     div ebx
     get_rd(ebx)
     set_register(ebx, eax)
-    jmp _ET    
+    jmp _ET
 
+%endif
 
 __xor:
     get_rs(eax)
@@ -298,50 +299,48 @@ __or:
 
 
 
-__multu:
+__mult: ; 	$LO = rs * rt
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
     mul ebx
-    get_low_register(33, ebx)   ; $lo <- eax (low part)
-    set_low_register(ebx, eax)
+    set_register(33, eax) ; $lo
     jmp _ET
 
-__divu:
+%if 1
+
+__div: ; $LO = rs / rt; $HI = rs % rt
     xor edx, edx
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
     div ebx
-    ; $hi <- reminder
-    ; $lo <- result
-    get_low_register(33, ebx)   ; $lo 
-    get_high_register(32, ecx)  ; $hi 
+    set_register(32, edx) ; $hi
+    set_register(33, eax) ; $lo
+    jmp _ET
 
-    set_low_register(ebx, eax)
-    set_high_register(ecx, edx)
+%endif
 
-    jmp _ET 
-
-; rd <- $lo
-__mflo:
+__mflo: ; rd <- $lo
     get_rd(eax)
-    get_low_register(33, ebx)   ; $lo        
+    get_register(33, ebx) ; $lo        
     set_register(eax, ebx)
     jmp _ET
 
-; rd <- $hi
-__mfhi:
+__mfhi: ; rd <- $hi
     get_rd(eax)
-    get_high_register(32, ecx)  ; $hi
+    get_register(32, ecx) ; $hi
     set_register(eax, ecx)
     jmp _ET
 
+__mthi:
+
+__mtlo:
 
 
-    
+
 %if 0
 
 if rs < rt
@@ -574,3 +573,8 @@ __sw_data:
     sub ebx, 0x10010000
     mov [m_data + ebx], eax
     jmp _ET
+
+
+__nop:
+    jmp _ET
+
