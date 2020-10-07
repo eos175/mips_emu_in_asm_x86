@@ -43,7 +43,6 @@ section .bss
 
     logger      RESB 8 * 1024
         .len    RESD 1
-    
 
     m_pc         RESD 1 ; 0x00400000
 
@@ -196,9 +195,6 @@ __type_r:
     check_func(_mfhi_r, __mfhi)
 
     check_func(_sll_r, __sll)
-
-    jmp exit
-
 
 _ET:
     mov edx, [m_pc]

@@ -226,18 +226,6 @@ __sub: ; rd = rs - rt
     set_register(ebx, eax)
     jmp _ET
 
-%if 0
-__mul: ; rd = rs * rt
-    get_rs(eax)
-    get_rt(ebx)
-    get_register(eax, eax)
-    get_register(ebx, ebx)
-    mul ebx
-    get_rd(ebx)
-    set_register(ebx, eax)
-    jmp _ET
-
-%endif
 
 __mul: ; 	$LO = rs * rt
     get_rs(eax)
@@ -256,21 +244,6 @@ __mul: ; 	$LO = rs * rt
     set_register(32, eax) ; $hi
     jmp _ET
 
-%if 0
-
-__div: ; rd = rs / rt
-    ; https://stackoverflow.com/questions/45506439/division-of-two-numbers-in-nasm
-    xor edx, edx
-    get_rs(eax)
-    get_rt(ebx)
-    get_register(eax, eax)
-    get_register(ebx, ebx)
-    div ebx
-    get_rd(ebx)
-    set_register(ebx, eax)
-    jmp _ET
-
-%endif
 
 __xor:
     get_rs(eax)
@@ -309,16 +282,13 @@ __mult: ; 	$LO = rs * rt
     get_register(eax, eax)
     get_register(ebx, ebx)
     mul ebx
-
     ; int64 -> [hi]int32, [lo]int32
-    
     set_register(33, eax) ; $lo
     shr rax, 32
     set_register(32, eax) ; $hi
     jmp _ET
 
-%if 1
-
+; https://stackoverflow.com/questions/45506439/division-of-two-numbers-in-nasm
 __div: ; $LO = rs / rt; $HI = rs % rt
     xor edx, edx
     get_rs(eax)
@@ -329,8 +299,6 @@ __div: ; $LO = rs / rt; $HI = rs % rt
     set_register(32, edx) ; $hi
     set_register(33, eax) ; $lo
     jmp _ET
-
-%endif
 
 __mflo: ; rd <- $lo
     get_rd(eax)
@@ -353,7 +321,6 @@ else
     rd = 0
 
 %endif
-
 __slt:
     get_rs(eax)
     get_rt(ebx)
@@ -367,7 +334,6 @@ __slt:
 .L0:
     set_register(ecx, 1)
     jmp _ET
-
 
 
 %if 0
