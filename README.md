@@ -103,6 +103,12 @@ All suggestions and criticism are welcome
 
 [Square.ttf](http://strlen.com/square/)
 
+[MIPS Converter](https://www.eg.bucknell.edu/~csci320/mips_web/)
+
+[MIPS Instruction Reference](http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html)
+
+[MIPS Instruction Formats](https://en.wikibooks.org/wiki/MIPS_Assembly/Instruction_Formats)
+
 [Netwide Assembler - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 
 [x86_64 Linux Assembly #1 - "Hello, World!"](https://www.youtube.com/watch?v=VQAKkuLL31g)
