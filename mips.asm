@@ -34,24 +34,16 @@
 
 %define _mul_r		0x1c    ; TODO(eos175) op=0x1c func=0x02 --> voy a tratar esto como tipo I
 
-
-%define _mthi_r     0x11
-%define _mtlo_r     0x13
-
 %define _mfhi_r     0x10
 %define _mflo_r     0x12
 %define _mult_r     0x18
 %define _multu_r    0x19
-
-
-%define _nor_r		0x27
 %define _xor_r		0x26
 %define _or_r		0x25
 %define _slt_r		0x2A
 %define _sltu_r		0x2B
 %define _sll_r		0x00
 %define _srl_r		0x02
-%define _sra_r		0x03
 %define _sub_r		0x22
 %define _subu_r		0x23
 
@@ -63,16 +55,10 @@
 %define _blez_i		0x06
 %define _bne_i		0x05
 %define _bgtz_i 	0x07
-%define _lb_i		0x20
-%define _lbu_i		0x24
-%define _lhu_i		0x25
 %define _lui_i		0x0F
 %define _lw_i		0x23
 %define _ori_i		0x0D
-%define _sb_i		0x28
-%define _sh_i 		0x29
 %define _slti_i		0x0A
-%define _sltiu_i	0x0B
 %define _sw_i		0x2B
 
 ;-------------------Format J [Opcode]------------------------------------;
@@ -358,11 +344,6 @@ __mfhi: ; rd <- $hi
     set_register(eax, ecx)
     jmp _ET
 
-__mthi:
-
-__mtlo:
-
-
 
 %if 0
 
@@ -372,6 +353,7 @@ else
     rd = 0
 
 %endif
+
 __slt:
     get_rs(eax)
     get_rt(ebx)
