@@ -240,6 +240,7 @@ __sub: ; rd = rs - rt
     set_register(ebx, eax)
     jmp _ET
 
+%if 0
 __mul: ; rd = rs * rt
     get_rs(eax)
     get_rt(ebx)
@@ -248,6 +249,25 @@ __mul: ; rd = rs * rt
     mul ebx
     get_rd(ebx)
     set_register(ebx, eax)
+    jmp _ET
+
+%endif
+
+__mul: ; 	$LO = rs * rt
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    mul ebx
+
+    ; int64 -> [hi]int32, [lo]int32
+
+    set_register(33, eax) ; $lo
+    get_rd(ebx)
+    set_register(ebx, eax)
+    
+    shr rax, 32
+    set_register(32, eax) ; $hi
     jmp _ET
 
 %if 0
@@ -297,15 +317,18 @@ __or:
     jmp _ET
 
 
-
-
 __mult: ; 	$LO = rs * rt
     get_rs(eax)
     get_rt(ebx)
     get_register(eax, eax)
     get_register(ebx, ebx)
     mul ebx
+
+    ; int64 -> [hi]int32, [lo]int32
+    
     set_register(33, eax) ; $lo
+    shr rax, 32
+    set_register(32, eax) ; $hi
     jmp _ET
 
 %if 1
@@ -576,5 +599,7 @@ __sw_data:
 
 
 __nop:
+    mov QWORD[tv_nsec], 1000
+    sleeptime
     jmp _ET
 

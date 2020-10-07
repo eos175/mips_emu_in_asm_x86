@@ -197,6 +197,9 @@ __type_r:
 
     check_func(_sll_r, __sll)
 
+    jmp exit
+
+
 _ET:
     mov edx, [m_pc]
     add edx, 4
