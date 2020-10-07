@@ -2,6 +2,13 @@
 %define set_register(i, r)      mov DWORD[m_reg + i*4], r
 
 
+%define get_low_register(i ,r)       mov r, DWORD[m_reg + i*4]
+%define get_high_register(i ,r)      mov r, DWORD[m_reg + i*4]
+%define set_low_register(i, r)       mov DWORD[m_reg + i*4], r
+%define set_high_register(i, r)      mov DWORD[m_reg + i*4], r
+
+
+
 %define sys_call(v0, label)   __check_op v0, label
 
 %define check_func(code, label)    __check_op code, label
@@ -32,7 +39,13 @@
 %define _divu_r		0x1B
 %define _jr_r		0x08
 %define _mul_r		0x02    ; TODO(eos175) op=0x1c
-%define _multu_r	0x19
+
+%define _mfhi_r     0x10
+%define _mflo_r     0x12
+%define _mult_r     0x18
+%define _multu_r    0x19
+
+
 %define _nor_r		0x27
 %define _xor_r		0x26
 %define _or_r		0x25
@@ -281,6 +294,52 @@ __or:
     get_rd(ebx)
     set_register(ebx, eax)
     jmp _ET
+
+
+
+
+__multu:
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    mul ebx
+    get_low_register(33, ebx)   ; $lo <- eax (low part)
+    set_low_register(ebx, eax)
+    jmp _ET
+
+__divu:
+    xor edx, edx
+    get_rs(eax)
+    get_rt(ebx)
+    get_register(eax, eax)
+    get_register(ebx, ebx)
+    div ebx
+    ; $hi <- reminder
+    ; $lo <- result
+    get_low_register(33, ebx)   ; $lo 
+    get_high_register(32, ecx)  ; $hi 
+
+    set_low_register(ebx, eax)
+    set_high_register(ecx, edx)
+
+    jmp _ET 
+
+; rd <- $lo
+__mflo:
+    get_rd(eax)
+    get_low_register(33, ebx)   ; $lo        
+    set_register(eax, ebx)
+    jmp _ET
+
+; rd <- $hi
+__mfhi:
+    get_rd(eax)
+    get_high_register(32, ecx)  ; $hi
+    set_register(eax, ecx)
+    jmp _ET
+
+
 
     
 %if 0

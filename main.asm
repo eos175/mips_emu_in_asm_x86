@@ -50,7 +50,7 @@ section .bss
     m_data       RESD 1024 * 64 ; 65536 lineas
     m_text       RESD 1024 * 64
 
-    m_reg        RESD 32
+    m_reg        RESD 34
     m_stack      RESD 1024
 
     m_screen_p   RESB m_screen_size + m_screen_h  ; proxy a la pantalla real
@@ -186,6 +186,12 @@ __type_r:
     check_func(_sll_r, __sll)
     check_func(_sltu_r, __slt)
     check_func(_subu_r, __sub)
+
+    check_func(_multu_r, __multu)
+    check_func(_mult_r, __multu)
+    check_func(_divu_r, __divu)
+    check_func(_mflo_r, __mflo)
+    check_func(_mfhi_r, __mfhi)
 
 _ET:
     mov edx, [m_pc]

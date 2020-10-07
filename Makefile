@@ -8,8 +8,8 @@ debug:
 	ld -lc -I /lib64/ld-linux-x86-64.so.2 main.o dependencies.o -o mips_emu.app
 
 	#gdb --args ./mips_emu.app examples/pong.text.hex examples/pong.data.hex
-	gdb --args ./mips_emu.app examples/snake.text.hex examples/snake.data.hex
-
+	#gdb --args ./mips_emu.app examples/snake.text.hex examples/snake.data.hex
+	gdb --args ./mips_emu.app examples/2048.text.hex examples/2048.data.hex
 clear:
 	rm *.o
 	rm *.app

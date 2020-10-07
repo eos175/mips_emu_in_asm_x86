@@ -35,8 +35,10 @@ init_random:
 
     ret
 
-
 randint:
+    xor     edx, edx
+    cmp     edi, 0
+    je      .L1
     imul    rax, QWORD[next_s], 0x41c64e6b
     xor     edx, edx
     add     rax, 12345
@@ -44,5 +46,6 @@ randint:
     shr     rax, 16
     and     eax, 0x7fff
     div     edi
+.L1:
     mov     eax, edx
     ret
