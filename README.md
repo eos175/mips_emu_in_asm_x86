@@ -105,7 +105,7 @@ All suggestions and criticism are welcome
 
 [MIPS Converter](https://www.eg.bucknell.edu/~csci320/mips_web/)
 
-[MIPS Instruction Reference](http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html)
+[MIPS Instruction Reference](https://phoenix.goucher.edu/~kelliher/f2009/cs220/mipsir.html)
 
 [MIPS Instruction Formats](https://en.wikibooks.org/wiki/MIPS_Assembly/Instruction_Formats)
 
