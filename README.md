@@ -1,52 +1,119 @@
-#  Emulador MIPS en ensamblador x_86 
+#  Designed by :black_nib:
+
+[@eos175](https://github.com/eos175)
+
+[@kjiron](https://github.com/kjiron)
 
 
-## Instalar ensamblador NASM
+
+#  MIPS Emulator in Assembly x86
+The idea of this project is to do something similar to what MARS2 does, to be able to interpret
+MIPS type instructions and use the linux terminal as a graphical environment to have
+data output and input. All this is designed in asssembler for the x86 CPU architecture 
+
+
+## Installing NASM
 
 ```shell
 sudo apt-get install -y nasm
 ```
 
+## You need to install special fonts for better visualization! (optional)
 
-## Compilar
+
+To do this, you must first double click on
+
+![](res/screen_0.png)
+
+And then click install
+
+![](res/screen_1.png)
+
+
+Now you must change the font type of the terminal in preferences
+
+![](res/screen_2.png)
+
+
+Create a new profile for the new font
+
+![](res/screen_3.png)
+
+
+Change in Custom font to Square modern size 6
+
+![](res/screen_4.png)
+
+
+In compatibility change to IBM855 this is for extended ASCII characters ('▒')
+
+![](res/screen_5.png)
+
+
+And that would be it, you already have the terminal configured properly
+
+## How do I compile the Emulator?
 
 ```shell
-nasm -f elf64 hello.asm -o hello.o
-ld hello.o -o hello.app
-./hello.app
+make build
 ```
 
+## Change the Command Line Arguments
 
-## correr MARS2
+### pong
 
 ```shell
-java -jar MARS2.jar
+./mips_emu.app ejemplos/pong.text.hex ejemplos/pong.data.hex
 ```
+![pong](res/video_2.gif)
+
+### snake
+
+```shell
+./mips_emu.app ejemplos/snake.text.hex ejemplos/snake.data.hex
+```
+![snake](res/video_1.gif)
+
+
+You can turn on debugging, so you can see in a file each decoded instruction only by changing DEBUG to 1
+
 
 
 ## ToDo
 
-- [x] usar git
-- [x] bin -> hex, ver main.py
-- [x] hacer makefile
-- [x] leer args
-- [x] leer archivo
-- [ ] unir emulador
-- [ ] $gp -> pointer screen
-- [ ] pointer keyboard
+- [x] use git
+- [x] bin -> hex
+- [x] do makefile
+- [x] reed args
+- [x] reed file
+- [x] link the emulator
+- [x] $gp -> pointer screen
+- [x] pointer keyboard	
 
 
-## Referencia
 
-[Netwide Ensamblador - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
+## References
+
+All suggestions and criticism are welcome
+
+
+[Misto423 - Assembly-Snake](https://github.com/Misto423/Assembly-Snake)
+
+[AndrewHamm - MIPS-Pong](https://github.com/AndrewHamm/MIPS-Pong)
+
+[Square.ttf](http://strlen.com/square/)
+
+[MIPS Converter](https://www.eg.bucknell.edu/~csci320/mips_web/)
+
+[MIPS Instruction Reference](https://phoenix.goucher.edu/~kelliher/f2009/cs220/mipsir.html)
+
+[MIPS Instruction Formats](https://en.wikibooks.org/wiki/MIPS_Assembly/Instruction_Formats)
+
+[Netwide Assembler - Netwide Assembler](https://es.qwe.wiki/wiki/Netwide_Assembler)
 
 [x86_64 Linux Assembly #1 - "Hello, World!"](https://www.youtube.com/watch?v=VQAKkuLL31g)
 
 [x86_64 Linux Assembly #12 - Reading Files](https://www.youtube.com/watch?v=BljOGzRP_Ws)
 
-[obtener argumentos, code](https://gist.github.com/Gydo194/730c1775f1e05fdca6e9b0c175636f5b)
-
-[MIPS-Simulator-Python](https://github.com/GeorgeSaman/MIPS-Simulator-Python)
-
-[Combinacion de C y Ensamblador](https://cs.lmu.edu/~ray/notes/nasmtutorial/)
+[Combine C & Assembly](https://cs.lmu.edu/~ray/notes/nasmtutorial/)
 

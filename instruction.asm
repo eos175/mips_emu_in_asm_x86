@@ -44,10 +44,6 @@ struc instruction_t
 endstruc
 
 
-%if 0
-
-global get_instruction
-
 get_instruction:
     ; op = t >> 26
     mov     eax, edi
@@ -87,8 +83,6 @@ get_instruction:
     mov     WORD[rsi+6], di
 
     ; target = t & 0x3ffffff
-    and     edi, 67108863
+    and     edi, 0x3ffffff
     mov     DWORD[rsi+8], edi
     ret
-
-%endif
